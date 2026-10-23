@@ -1,0 +1,20 @@
+{
+  "name": "crocotaste-plugin",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test checks/*.test.mjs",
+    "check": "npm run format:check && npm run test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "validate": "npx -y @anthropic-ai/claude-code@latest plugin validate --strict .",
+    "prepare": "node -e \"try { require('node:child_process').execFileSync('git', ['config', 'core.hooksPath', '.githooks'], { stdio: 'ignore' }) } catch {}\""
+  },
+  "devDependencies": {
+    "prettier": "^3.9.10"
+  }
+}
