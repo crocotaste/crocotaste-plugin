@@ -12,7 +12,7 @@ const COMMANDS = new Map([
     {
       summary:
         "Write the tokens in BRAND.html into DESIGN.md, merging what is there",
-      usage: "crocotaste tokens [--write]",
+      usage: "crocotaste tokens <BRAND.html> <DESIGN.md> --write | --print",
       load: () => import("../commands/tokens.mjs"),
     },
   ],
