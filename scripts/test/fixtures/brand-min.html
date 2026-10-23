@@ -15,7 +15,7 @@
       --color-border-strong: #c3c8d1;
       --color-text: #16181d;
       --color-text-muted: #5a6270;
-      --color-text-faint: #8a92a0;
+      --color-text-faint: #7a8290;
       --color-text-inverse: #ffffff;
       --color-primary: #2456e6;
       --color-primary-hover: #1c46c2;
@@ -100,10 +100,25 @@
       --color-scrim: rgba(0,0,0,0.7);
       }
       <!-- tokens:end -->
+      @media (prefers-reduced-motion: reduce) {
+        * { transition: none; animation: none; }
+      }
     </style>
   </head>
   <body>
-    <nav data-sidebar></nav>
+    <button data-theme-toggle>Theme</button>
+    <nav data-sidebar>
+      <a href="#foundations">Foundations</a>
+      <a href="#mark">Mark</a>
+      <a href="#color">Color</a>
+      <a href="#typography">Typography</a>
+      <a href="#spacing">Spacing</a>
+      <a href="#iconography">Iconography</a>
+      <a href="#components">Components</a>
+      <a href="#motion">Motion</a>
+      <a href="#voice">Voice</a>
+      <a href="#responsive">Responsive</a>
+    </nav>
     <section id="foundations" data-chapter></section>
     <section id="mark" data-chapter></section>
     <section id="color" data-chapter></section>
@@ -111,8 +126,20 @@
     <section id="spacing" data-chapter></section>
     <section id="iconography" data-chapter></section>
     <section id="components" data-chapter>
-      <div data-component="button-primary" data-tokens="backgroundColor=primary textColor=primary-text rounded=full"></div>
-      <div data-component="input" data-tokens="borderColor=border textColor=text rounded=md"></div>
+      <div data-component="button-primary" data-tokens="backgroundColor=primary textColor=primary-text rounded=full"><span data-state="default"></span><span data-state="hover"></span><span data-state="active"></span><span data-state="focus"></span><span data-state="disabled"></span><span data-state="loading"></span></div>
+      <div data-component="button-secondary"></div>
+      <div data-component="button-ghost"></div>
+      <div data-component="input" data-tokens="borderColor=border textColor=text rounded=md"><span data-state="default"></span><span data-state="hover"></span><span data-state="active"></span><span data-state="focus"></span><span data-state="disabled"></span><span data-state="error"></span></div>
+      <div data-component="select"></div>
+      <div data-component="checkbox"></div>
+      <div data-component="switch"></div>
+      <div data-component="card"></div>
+      <div data-component="table"></div>
+      <div data-component="tabs"></div>
+      <div data-component="dialog"></div>
+      <div data-component="toast"></div>
+      <div data-component="empty-state"></div>
+      <div data-component="nav"></div>
     </section>
     <section id="motion" data-chapter></section>
     <section id="voice" data-chapter></section>
