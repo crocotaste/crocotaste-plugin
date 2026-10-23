@@ -23,7 +23,7 @@ npm run format       # Prettier
 npm run validate     # claude plugin validate --strict
 ```
 
-`npm test` runs `node --test checks/*.test.mjs` for now (Node 24 reads a bare directory as a module). The CLI tasks add `scripts/test/` to it when that folder exists.
+`npm test` runs `node --test checks/*.test.mjs scripts/test/*.test.mjs`: the repo rules, then the command line tool.
 
 ## Constraints
 

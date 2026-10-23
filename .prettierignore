@@ -4,3 +4,4 @@ evals/**/fixtures/
 CHANGELOG.md
 package-lock.json
 .superpowers/
+scripts/test/fixtures/

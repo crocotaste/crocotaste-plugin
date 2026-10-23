@@ -7,7 +7,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "node --test checks/*.test.mjs",
+    "test": "node --test checks/*.test.mjs scripts/test/*.test.mjs",
     "check": "npm run format:check && npm run test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
