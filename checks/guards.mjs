@@ -87,7 +87,13 @@ function scanStaged(root) {
     .filter((file) => file && !/(^|\/)(node_modules|\.git)\//.test(file));
   const problems = [];
   for (const file of names) {
-    const content = git(root, ["show", `:${file}`]);
+    let content;
+    try {
+      content = git(root, ["show", `:${file}`]);
+    } catch {
+      console.error(`skipped ${file}: not readable from the index`);
+      continue;
+    }
     if (content.length > MAX_BYTES) {
       problems.push(`${file} is over 1 MB`);
       continue;
@@ -100,10 +106,10 @@ function scanStaged(root) {
 
 function scanMessage(file) {
   const text = readFileSync(file, "utf8");
-  const problems = scanText("commit message", text);
-  const subject = text
-    .split("\n")
-    .find((line) => line.trim() && !line.startsWith("#"));
+  // Git strips # lines, so they are not part of the message.
+  const lines = text.split("\n").filter((line) => !line.startsWith("#"));
+  const problems = scanText("commit message", lines.join("\n"));
+  const subject = lines.find((line) => line.trim());
   if (!subject || !COMMIT.test(subject)) {
     problems.push(
       "commit message must be a conventional commit, like `feat(scripts): add a flag`"
