@@ -51,12 +51,12 @@ const REQUIRED_STATES = {
 const THEMES = ["light", "dark"];
 
 function attribute(tag, name) {
-  const match = tag.match(new RegExp(`\\b${name}=(["'])(.*?)\\1`, "i"));
+  const match = tag.match(new RegExp(`(?<![\\w-])${name}=(["'])(.*?)\\1`, "i"));
   return match?.[2];
 }
 
 function ratioText(value) {
-  return `${value.toFixed(2)}:1`;
+  return `${(Math.floor(value * 100) / 100).toFixed(2)}:1`;
 }
 
 function chapterRules(html) {
@@ -65,9 +65,12 @@ function chapterRules(html) {
   for (const tag of html.match(/<section\b[^>]*>/gi) ?? []) {
     if (/\bdata-chapter\b/i.test(tag)) found.push(attribute(tag, "id"));
   }
+  // Order is judged among the chapters present, so one gap is one problem.
+  const presentInOrder = CHAPTERS.filter((id) => found.includes(id));
+  const foundKnown = found.filter((id) => CHAPTERS.includes(id));
   CHAPTERS.forEach((id, index) => {
     if (!found.includes(id)) problems.push(`chapter ${id}: missing`);
-    else if (found.filter((f) => CHAPTERS.includes(f))[index] !== id) {
+    else if (foundKnown[presentInOrder.indexOf(id)] !== id) {
       problems.push(
         `chapter ${id}: out of order (expected position ${index + 1})`
       );
@@ -141,6 +144,30 @@ function flatten(color, base) {
   };
 }
 
+// Walks same-name tags from the opening tag to its matching close, so a
+// sibling's states are never credited to the component.
+function elementContent(html, id) {
+  const open = html.match(
+    new RegExp(
+      `<([a-z][\\w-]*)\\b[^>]*(?<![\\w-])data-component=(["'])${id}\\2[^>]*>`,
+      "i"
+    )
+  );
+  if (!open) return undefined;
+  const name = open[1];
+  const start = open.index + open[0].length;
+  if (open[0].endsWith("/>")) return "";
+  const tags = new RegExp(`<(/?)${name}\\b[^>]*?(/?)>`, "gi");
+  tags.lastIndex = start;
+  let depth = 1;
+  for (let m = tags.exec(html); m; m = tags.exec(html)) {
+    if (m[2] === "/") continue;
+    depth += m[1] ? -1 : 1;
+    if (depth === 0) return html.slice(start, m.index);
+  }
+  return html.slice(start);
+}
+
 function componentRules(html) {
   const problems = [];
   const tags = html.match(/<[a-z][^>]*\bdata-component=[^>]*>/gi) ?? [];
@@ -149,13 +176,8 @@ function componentRules(html) {
     if (!present.includes(id)) problems.push(`${id}: missing component`);
   }
   for (const [id, states] of Object.entries(REQUIRED_STATES)) {
-    const from = html.search(
-      new RegExp(`<[a-z][^>]*\\bdata-component=(["'])${id}\\1`, "i")
-    );
-    if (from === -1) continue;
-    const rest = html.slice(html.indexOf(">", from) + 1);
-    const stop = rest.search(/\bdata-component=|<\/section>/i);
-    const scope = stop === -1 ? rest : rest.slice(0, stop);
+    const scope = elementContent(html, id);
+    if (scope === undefined) continue;
     const have = (scope.match(/\bdata-state=(["'])(.*?)\1/gi) ?? []).map((m) =>
       attribute(m, "data-state")
     );
