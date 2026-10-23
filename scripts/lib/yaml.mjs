@@ -2,6 +2,10 @@ const TOP_ORDER = ["version", "name", "description", "omitted"];
 const TAIL_ORDER = ["colors", "spacing", "rounded", "typography", "components"];
 
 const NUMBER = /^-?\d+(\.\d+)?$/;
+// Shapes a standard YAML reader takes for a number, which we must keep quoted.
+const NUMBER_LIKE =
+  /^[-+]?(\d[\d_]*\.?\d*|\.\d+)([eE][-+]?\d+)?$|^0x[0-9a-f]+$|^0o[0-7]+$|^[-+]?\.(inf|nan)$/i;
+const RESERVED = /^(null|~|yes|no|on|off|y|n|true|false)$/i;
 const REFERENCE = /^\{[\w.-]+\}$/;
 const PLAIN_KEY = /^[A-Za-z_][\w-]*$/;
 // Anything YAML would read as something other than a plain string.
@@ -26,6 +30,30 @@ function unquote(text, line) {
     : inner.replace(/''/g, "'");
 }
 
+// A comment starts at a # outside quotes and after whitespace.
+function stripComment(text, line) {
+  const quote = text[0];
+  if (quote === '"' || quote === "'") {
+    let i = 1;
+    while (i < text.length) {
+      if (quote === '"' && text[i] === "\\") i += 2;
+      else if (text[i] === quote) {
+        if (quote === "'" && text[i + 1] === "'") i += 2;
+        else break;
+      } else i += 1;
+    }
+    if (i >= text.length) {
+      throw new YamlSubsetError("Unterminated quoted string", line);
+    }
+    const tail = text.slice(i + 1).trim();
+    if (tail !== "" && !tail.startsWith("#")) {
+      throw new YamlSubsetError("Unexpected text after a quoted string", line);
+    }
+    return text.slice(0, i + 1);
+  }
+  return text.replace(/(^|\s)#.*$/, "").trim();
+}
+
 function parseScalar(text, line) {
   if (text[0] === '"' || text[0] === "'") return unquote(text, line);
   if (REFERENCE.test(text)) return text;
@@ -39,6 +67,7 @@ function parseScalar(text, line) {
     throw new YamlSubsetError("Flow collections are not supported", line);
   }
   if (NUMBER.test(text)) return Number(text);
+  if (text === "null" || text === "~") return null;
   if (text === "true") return true;
   if (text === "false") return false;
   return text;
@@ -74,7 +103,9 @@ function parseYaml(text) {
       throw new YamlSubsetError("Sequences are not supported", line);
     }
     while (stack.length > 1 && indent <= stack.at(-1).indent) stack.pop();
-    const { key, rest } = splitKey(content, line);
+    const split = splitKey(content, line);
+    const key = split.key;
+    const rest = stripComment(split.rest, line);
     const parent = stack.at(-1).map;
     if (rest === "") {
       const child = {};
@@ -88,10 +119,13 @@ function parseYaml(text) {
 }
 
 function emitKey(key) {
-  return PLAIN_KEY.test(key) ? key : emitScalar(key, true);
+  return PLAIN_KEY.test(key) && !RESERVED.test(key)
+    ? key
+    : emitScalar(key, true);
 }
 
 function emitScalar(value, forceQuote = false) {
+  if (value === null) return "null";
   if (typeof value === "number" || typeof value === "boolean") {
     return String(value);
   }
@@ -101,9 +135,8 @@ function emitScalar(value, forceQuote = false) {
   const quote =
     forceQuote ||
     NEEDS_QUOTES.test(value) ||
-    NUMBER.test(value) ||
-    value === "true" ||
-    value === "false";
+    NUMBER_LIKE.test(value) ||
+    RESERVED.test(value);
   return quote ? `"${value.replace(/(["\\])/g, "\\$1")}"` : value;
 }
 

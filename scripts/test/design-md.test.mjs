@@ -111,3 +111,29 @@ test("splitDesignMd separates frontmatter and body, and handles no frontmatter",
   assert.equal(none.frontmatter, null);
   assert.equal(none.body, "# Just a body\n");
 });
+
+test("splitDesignMd reads past a byte-order mark and leading blank lines", () => {
+  const split = splitDesignMd(`﻿\n\n${existingMd}`);
+  assert.equal(split.bom, "﻿");
+  assert.ok(split.frontmatter.startsWith("version: alpha"));
+  assert.equal(split.body, splitDesignMd(existingMd).body);
+});
+
+test("splitDesignMd flags a --- block that is not at the top", () => {
+  const split = splitDesignMd("# Title\n\n---\nversion: alpha\n---\n");
+  assert.equal(split.frontmatter, null);
+  assert.equal(split.misplaced, true);
+  assert.equal(splitDesignMd("# Title\n\ntext\n").misplaced, false);
+});
+
+test("typography always has a fontFamily, falling back to the body role", () => {
+  const css = readTokenBlock(html).css.replace(
+    "--text-small-family: body;",
+    ""
+  );
+  const fm = frontmatterFromTokens(parseTokens(css), {
+    components: {},
+    warnings: [],
+  });
+  assert.equal(fm.typography.small.fontFamily, "Inter");
+});

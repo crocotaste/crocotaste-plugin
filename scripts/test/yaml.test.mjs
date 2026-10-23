@@ -72,3 +72,40 @@ test("throws on anchors, block scalars and flow collections", () => {
     (error) => error instanceof YamlSubsetError && error.line === 1
   );
 });
+
+test("strips a trailing comment outside quotes", () => {
+  assert.deepEqual(parseYaml("version: alpha # spec\n"), { version: "alpha" });
+  assert.deepEqual(parseYaml("a: \"#fff\" # brand\nb: 'x # y' # z\n"), {
+    a: "#fff",
+    b: "x # y",
+  });
+  assert.deepEqual(parseYaml("a: # note\n  b: 1\n"), { a: { b: 1 } });
+});
+
+test("quotes words and numbers a standard reader would misread", () => {
+  const words = [
+    "null",
+    "~",
+    "yes",
+    "No",
+    "ON",
+    "off",
+    "y",
+    "N",
+    ".5",
+    "1e3",
+    "1.",
+    "0x1F",
+    "-.5",
+    ".inf",
+  ];
+  const value = Object.fromEntries(words.map((w, i) => [`k${i}`, w]));
+  const keys = Object.fromEntries(
+    ["true", "null", "yes", "Off"].map((k) => [k, "v"])
+  );
+  const sample = { v: value, k: keys };
+  const text = emitYaml(sample);
+  for (const w of words) assert.ok(text.includes(`"${w}"`), w);
+  for (const k of Object.keys(keys)) assert.ok(text.includes(`"${k}":`), k);
+  assert.deepEqual(parseYaml(text), sample);
+});

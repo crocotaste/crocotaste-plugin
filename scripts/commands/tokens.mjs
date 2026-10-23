@@ -69,9 +69,22 @@ function run(args, io) {
   for (const warning of componentMap.warnings) io.stderr.write(`${warning}\n`);
 
   const hadFile = existsSync(designPath);
-  const { frontmatter, body } = hadFile
+  const split = hadFile
     ? splitDesignMd(readFileSync(designPath, "utf8"))
-    : { frontmatter: null, body: BODY_SKELETON };
+    : {
+        frontmatter: null,
+        body: BODY_SKELETON,
+        bom: "",
+        eol: "\n",
+        misplaced: false,
+      };
+  const { frontmatter, body, bom, eol } = split;
+  if (split.misplaced) {
+    io.stderr.write(
+      `${files[1]} has a --- block that is not at the top of the file. Move it to the top or remove it, then run tokens again.\n`
+    );
+    return 1;
+  }
   let existing = null;
   try {
     if (frontmatter !== null) existing = parseYaml(frontmatter);
@@ -93,14 +106,14 @@ function run(args, io) {
     Object.keys(componentMap.components)
   );
   const merged = mergeFrontmatter(existing, generated, ownedKeys);
-  const text = `---\n${emitYaml(merged)}---\n`;
+  const text = `---\n${emitYaml(merged)}---\n`.replace(/\n/g, eol);
 
   if (print) {
     io.stdout.write(text);
     return 0;
   }
   mkdirSync(dirname(designPath), { recursive: true });
-  writeFileSync(designPath, `${text}${body}`);
+  writeFileSync(designPath, `${bom}${text}${body}`);
   const count = (section) => Object.keys(generated[section]).length;
   io.stdout.write(
     `wrote ${files[1]} (${count("colors")} colors, ${count("spacing")} spacing, ${count("rounded")} rounded, ${count("typography")} typography, ${count("components")} components; kept ${keptCount(existing, generated)} keys)\n`

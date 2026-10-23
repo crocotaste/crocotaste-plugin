@@ -24,6 +24,8 @@ const BODY_SKELETON = HEADINGS.map(
 ).join("\n");
 
 const FRONTMATTER = /^---\r?\n([\s\S]*?\r?\n)?---[ \t]*(?:\r?\n|$)/;
+const MISPLACED_BLOCK = /^---[ \t]*\r?\n[\s\S]*?^---[ \t]*$/m;
+const BOM = "\uFEFF";
 
 function isObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -59,7 +61,7 @@ function typographyOf(light) {
   for (const [name, size] of namesWith(light, "text-")) {
     if (isCompanion(name, light)) continue;
     const role = light.get(`text-${name}-family`);
-    const family = role === undefined ? undefined : light.get(`font-${role}`);
+    const family = light.get(`font-${role}`) ?? light.get("font-body");
     const weight = light.get(`text-${name}-weight`);
     const leading = light.get(`text-${name}-leading`);
     const tracking = light.get(`text-${name}-tracking`);
@@ -155,10 +157,30 @@ function ownedKeysOf(generated, componentIds) {
   return owned;
 }
 
+// The byte-order mark and leading blank lines are not ours to lose; a --- block
+// anywhere else is reported as misplaced so nothing is stacked on top of it.
 function splitDesignMd(text) {
-  const match = text.match(FRONTMATTER);
-  if (!match) return { frontmatter: null, body: text };
-  return { frontmatter: match[1] ?? "", body: text.slice(match[0].length) };
+  const bom = text.startsWith(BOM) ? BOM : "";
+  const rest = text.slice(bom.length);
+  const eol = rest.includes("\r\n") ? "\r\n" : "\n";
+  const trimmed = rest.replace(/^(?:[ \t]*\r?\n)+/, "");
+  const match = trimmed.match(FRONTMATTER);
+  if (!match) {
+    return {
+      frontmatter: null,
+      body: rest,
+      bom,
+      eol,
+      misplaced: MISPLACED_BLOCK.test(rest),
+    };
+  }
+  return {
+    frontmatter: match[1] ?? "",
+    body: trimmed.slice(match[0].length),
+    bom,
+    eol,
+    misplaced: false,
+  };
 }
 
 function mergeFrontmatter(existing, generated, ownedKeys) {
