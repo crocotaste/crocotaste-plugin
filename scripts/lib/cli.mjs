@@ -20,7 +20,7 @@ const COMMANDS = new Map([
     "sync",
     {
       summary: "Bring the mockups in line with the tokens in BRAND.html",
-      usage: "crocotaste sync",
+      usage: "crocotaste sync <BRAND.html> <mockups dir>",
       load: () => import("../commands/sync.mjs"),
     },
   ],
