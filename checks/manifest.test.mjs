@@ -31,7 +31,10 @@ test("marketplace.json is the same plugin from this repo", () => {
 });
 
 test("every skill folder has a SKILL.md and no other folder is a skill", () => {
-  const folders = readdirSync(new URL("skills/", root)).sort();
+  const folders = readdirSync(new URL("skills/", root), { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort();
   assert.deepEqual(folders, [
     "branding",
     "extract",
