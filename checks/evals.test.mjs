@@ -33,6 +33,13 @@ const GRADER_TYPES = new Set([
   "llm",
   "baseline",
 ]);
+const COMMON_FIELDS = ["type", "weight", "arm"];
+const GRADER_FIELDS = {
+  tool_used: ["tool", "input_match", "min", "max"],
+  regex: ["pattern", "flags", "match", "target"],
+  file_exists: ["path", "exists"],
+  llm: ["criteria", "focus"],
+};
 const NO_TRIGGER = ["build-todo-no-trigger", "fix-bug-no-trigger"];
 
 function caseFolders() {
@@ -112,6 +119,23 @@ test("every case has at least one grader with a documented type", () => {
         GRADER_TYPES.has(grader.keys.type),
         `${name}/${grader.file} has type ${grader.keys.type}`
       );
+    }
+  }
+});
+
+test("every grader uses only the fields its type documents", () => {
+  for (const name of caseFolders()) {
+    for (const grader of graders(name)) {
+      const allowed = [
+        ...COMMON_FIELDS,
+        ...(GRADER_FIELDS[grader.keys.type] ?? []),
+      ];
+      for (const key of Object.keys(grader.keys)) {
+        assert.ok(
+          allowed.includes(key),
+          `${name}/${grader.file} has ${key} for type ${grader.keys.type}`
+        );
+      }
     }
   }
 });

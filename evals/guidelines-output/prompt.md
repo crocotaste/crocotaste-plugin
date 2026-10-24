@@ -5,7 +5,7 @@ runs: 2
 max_turns: 60
 timeout_seconds: 1500
 tags: [output]
-allowed_tools: [Read, Glob, Grep, Skill, Bash, Write, Edit]
+allowed_tools: [Read, Glob, Grep, Skill, Agent, Bash, Write, Edit]
 ---
 
 The brief at docs/design/brief.md is approved. Write the brand book and the DESIGN.md.
