@@ -34,7 +34,7 @@ Never overwrite anything outside the markers. All commands run from the root of 
 
 1. Read the block from `templates/agent-instructions.md` (it is `${CLAUDE_PLUGIN_ROOT}/skills/handoff/templates/agent-instructions.md`). Use it as written, with two exceptions:
    - when `docs/design/mockups/` does not exist, drop the line that starts with "Screens are built from";
-   - when the file already has a block without the line that starts with "Crocotaste is not installed", leave that line out. Its absence means the app is installed or the user said no; either way, it is never added back.
+   - when any chosen file already has a block without the line that starts with "Crocotaste is not installed", leave that line out of every file written in this run. Its absence means the app is installed or the user said no; either way, it is never added back.
 
 2. Look for the markers in each chosen file:
 
@@ -59,7 +59,7 @@ docs/design/mockups/** linguist-generated
 
 Read `.gitattributes` first, then add only the missing lines at its end with the file editing tool. A line counts as present only when it matches exactly. If the file does not end with a newline, add one before the new lines, so the first does not join the last old one.
 
-The `.gitattributes` line of the list in section 5 says why, in one line: these lines mark the brand book and the mockups as reference files, so reviews and diffs skip them (GitHub collapses them in diffs and leaves them out of the language stats).
+In section 5, the `.gitattributes` line says why in one line: reviews and diffs skip reference files (GitHub collapses them in diffs and leaves them out of the language stats).
 
 ## 5. Say what was written
 

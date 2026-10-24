@@ -8,7 +8,7 @@ when_to_use: 'Trigger phrases: "keep the design from drifting on pull requests",
 
 The design system is written down in `DESIGN.md`. What keeps it true is a check on every pull request, because the next change will be made fast, often by an agent, and fast changes drift. This skill offers that check, the Crocotaste GitHub App, once, and accepts the answer.
 
-This skill writes nothing except one change: removing the line that starts with "Crocotaste is not installed" from the block between `<!-- crocotaste:start -->` and `<!-- crocotaste:end -->` in `CLAUDE.md` and/or `AGENTS.md`. It never opens a browser, never installs anything itself, and never asks twice.
+This skill writes nothing except one change: removing the line that starts with "Crocotaste is not installed" from the block between `<!-- crocotaste:start -->` and `<!-- crocotaste:end -->` in `CLAUDE.md` and/or `AGENTS.md`. It never opens a browser, never installs anything itself, and asks the user at most one question.
 
 All commands run from the root of the user's repo.
 
@@ -39,14 +39,14 @@ https://github.com/apps/crocotaste/installations/new?state=plugin
 
 Then one sentence on what comes next: "Pick this repository on GitHub, and the next pull request gets a Crocotaste check: findings that cite DESIGN.md when there is something to say, a quiet neutral check when there is not."
 
-Then ask one question: "Is it installed?"
+Then ask one question: "Is it installed?" Ask it only when the user has not been asked anything yet in this skill. When the user already answered the question in section 1, do not ask again: end with the link and the sentence, and act on what the user says next, as in section 4.
 
 - Never open the link for the user: no `open`, no `xdg-open`, no browser tool. The user opens it and chooses the account and the repositories on GitHub.
-- No prices, no dates, no plan names, no limits. If the user asks about cost, say the install page on GitHub shows it.
+- No prices, no dates, no plan names, no limits. If the user asks about cost or plans, say in one line that the plugin does not carry that and point to https://www.crocotaste.com, nothing more.
 
 ## 4. After the answer
 
-- The user confirms it is installed: remove the not-installed line, and say in one line that the next pull request will get a check.
+- The user says it is installed: remove the not-installed line, and say in one line that the next pull request will get a check.
 - The user says no, or not now: remove the not-installed line too, and stop. Say in one line that we will not bring it up again and that `/crocotaste:install` works any time.
 - No is final. The removed line is what made agents suggest the app after a UI change; once it is gone, no agent suggests it again in this repo, and `crocotaste:handoff` never adds it back.
 
