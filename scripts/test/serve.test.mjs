@@ -1,11 +1,19 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { request } from "node:http";
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  realpathSync,
+  statSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { run } from "../lib/cli.mjs";
-import { startPreview } from "../commands/serve.mjs";
+import { startPreview, statePath } from "../commands/serve.mjs";
 
 const quiet = { stdout: { write() {} }, stderr: { write() {} } };
 
@@ -30,14 +38,16 @@ async function get(url, init = {}) {
   }
 }
 
-// fetch normalizes "../" away, so a traversal has to go out on a raw socket.
-function rawStatus(port, path) {
+// fetch normalizes "../" away and fixes Host, so those go out on a raw socket.
+function rawGet(port, path, headers = {}) {
   return new Promise((resolve, reject) => {
     const req = request(
-      { host: "127.0.0.1", port, path, method: "GET", timeout: 2000 },
+      { host: "127.0.0.1", port, path, method: "GET", headers, timeout: 2000 },
       (res) => {
-        res.resume();
-        resolve(res.statusCode);
+        let body = "";
+        res.setEncoding("utf8");
+        res.on("data", (chunk) => (body += chunk));
+        res.on("end", () => resolve({ status: res.statusCode, body }));
       }
     );
     req.on("timeout", () => req.destroy(new Error("timeout")));
@@ -116,10 +126,99 @@ test("refuses ../, dotfiles and .env with 404 and never reads them", async () =>
       "/sub",
       "/%00",
     ]) {
-      assert.equal(await rawStatus(preview.port, path), 404, path);
+      assert.equal((await rawGet(preview.port, path)).status, 404, path);
     }
   } finally {
     await preview.close();
+  }
+});
+
+test("refuses a request whose Host is not ours with 403", async () => {
+  const { site } = setup();
+  const preview = await startPreview({ root: site, io: quiet });
+  try {
+    for (const path of ["/index.html", "/__crocotaste/ping"]) {
+      const { status, body } = await rawGet(preview.port, path, {
+        Host: `evil.example:${preview.port}`,
+      });
+      assert.equal(status, 403, path);
+      assert.ok(!body.includes("Hi"));
+    }
+    const local = await rawGet(preview.port, "/index.html", {
+      Host: `localhost:${preview.port}`,
+    });
+    assert.equal(local.status, 200);
+  } finally {
+    await preview.close();
+  }
+});
+
+test("a symlink that leaves root or lands on a dotfile is a 404", async () => {
+  const outside = mkdtempSync(join(tmpdir(), "serve-out-"));
+  writeFileSync(join(outside, "secret.html"), "<p>secret</p>");
+  const root = mkdtempSync(join(tmpdir(), "serve-"));
+  writeFileSync(join(root, ".env"), "TOKEN=x");
+  symlinkSync(join(outside, "secret.html"), join(root, "index.html"));
+  symlinkSync(".env", join(root, "config.html"));
+  const preview = await startPreview({ root, io: quiet });
+  try {
+    for (const path of ["/", "/index.html", "/config.html"]) {
+      const { status, body } = await rawGet(preview.port, path);
+      assert.equal(status, 404, path);
+      assert.ok(!body.includes("secret") && !body.includes("TOKEN"), path);
+    }
+  } finally {
+    await preview.close();
+  }
+});
+
+test(
+  "the state file is private to the user",
+  {
+    skip: process.platform === "win32",
+  },
+  async () => {
+    const { site } = setup();
+    const preview = await startPreview({ root: site, io: quiet });
+    try {
+      const file = statePath(realpathSync.native(site));
+      assert.equal(statSync(file).mode & 0o777, 0o600);
+    } finally {
+      await preview.close();
+    }
+    assert.ok(!existsSync(statePath(realpathSync.native(site))));
+  }
+);
+
+test("a state file with the wrong secret is not reused", async () => {
+  const { site } = setup();
+  const decoy = setup();
+  const other = await startPreview({ root: decoy.site, io: quiet });
+  try {
+    const root = realpathSync.native(site);
+    mkdirSync(join(statePath(root), ".."), { recursive: true });
+    writeFileSync(
+      statePath(root),
+      JSON.stringify({
+        pid: 1,
+        port: other.port,
+        url: other.url,
+        root,
+        secret: "0".repeat(32),
+      })
+    );
+    let out = "";
+    const code = await run(["serve", site, "--idle-minutes", "0.01"], {
+      stdout: { write: (text) => (out += text) },
+      stderr: { write() {} },
+      cwd: site,
+    });
+    assert.equal(code, 0);
+    const line = JSON.parse(out.trim());
+    assert.notEqual(line.port, other.port);
+    assert.equal(line.pid, process.pid);
+  } finally {
+    await other.close();
   }
 });
 
@@ -198,6 +297,8 @@ test("a missing path or a bad flag is a usage error", async () => {
   assert.equal(await run(["serve", "nope.html"], io), 2);
   assert.equal(await run(["serve", ".", "--port", "x"], io), 2);
   assert.equal(await run(["serve", ".", "--wat"], io), 2);
+  assert.equal(await run(["serve", ".", "--port", ""], io), 2);
+  assert.equal(await run(["serve", ".", "--idle-minutes", ""], io), 2);
 });
 
 test("closes after the idle timeout", async () => {

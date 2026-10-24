@@ -1,17 +1,19 @@
 import { spawn } from "node:child_process";
-import { createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import {
   existsSync,
+  mkdirSync,
   readdirSync,
   readFileSync,
   realpathSync,
+  renameSync,
   rmSync,
   statSync,
   watch,
   writeFileSync,
 } from "node:fs";
 import { createServer, request } from "node:http";
-import { tmpdir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import { basename, dirname, join, relative, resolve, sep } from "node:path";
 
 const USAGE =
@@ -23,6 +25,8 @@ const SNIPPET = '<script src="/__crocotaste/reload.js"></script>';
 const DEBOUNCE_MS = 150;
 const KEEP_ALIVE_MS = 25_000;
 const PROBE_MS = 500;
+const MAX_TIMER_MS = 2 ** 31 - 1;
+const SECRET_HEADER = "x-crocotaste-preview";
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -63,9 +67,36 @@ function encodePath(path) {
   return path.split(/[\\/]/).map(encodeURIComponent).join("/");
 }
 
+// Per user, not the shared tmpdir, so another account cannot plant or read it.
+function stateDir() {
+  let home = "";
+  try {
+    home = homedir();
+  } catch {
+    // No home folder, as in some containers.
+  }
+  return home ? join(home, ".cache", "crocotaste") : tmpdir();
+}
+
 function statePath(root) {
   const hash = createHash("sha1").update(root).digest("hex").slice(0, 12);
-  return join(tmpdir(), `crocotaste-preview-${hash}.json`);
+  return join(stateDir(), `crocotaste-preview-${hash}.json`);
+}
+
+function writeState(file, state) {
+  mkdirSync(dirname(file), { recursive: true, mode: 0o700 });
+  const temp = `${file}.${process.pid}.${randomBytes(4).toString("hex")}.tmp`;
+  try {
+    writeFileSync(temp, JSON.stringify(state), { mode: 0o600 });
+    renameSync(temp, file);
+  } catch (error) {
+    rmSync(temp, { force: true });
+    throw error;
+  }
+}
+
+function hasDotSegment(path) {
+  return path.split(/[\\/]/).some((segment) => segment.startsWith("."));
 }
 
 function inside(root, path) {
@@ -73,8 +104,8 @@ function inside(root, path) {
 }
 
 function inject(html) {
-  const at = html.toLowerCase().lastIndexOf("</body>");
-  if (at === -1) return html + SNIPPET;
+  const at = [...html.matchAll(/<\/body\s*>/gi)].at(-1)?.index;
+  if (at === undefined) return html + SNIPPET;
   return html.slice(0, at) + SNIPPET + html.slice(at);
 }
 
@@ -123,7 +154,7 @@ ${SNIPPET}
 }
 
 // Decodes the request path and maps it into root, or null for anything that
-// must look like it does not exist: traversal, dotfiles, .env, bad encoding.
+// must look like it does not exist: traversal, dotfiles, bad encoding.
 function mapPath(root, url) {
   const raw = url.split(/[?#]/, 1)[0];
   if (!raw.startsWith("/")) return null;
@@ -135,15 +166,12 @@ function mapPath(root, url) {
   }
   if (decoded.includes("\0")) return null;
   const segments = decoded.split(/[\\/]/).filter(Boolean);
-  for (const segment of segments) {
-    if (segment.startsWith(".") || segment.toLowerCase() === ".env") {
-      return null;
-    }
-  }
+  if (segments.some((segment) => segment.startsWith("."))) return null;
   const path = resolve(root, ...segments);
   return inside(root, path) ? path : null;
 }
 
+// Resolves to the preview's secret, or null when nothing like us answers.
 function probe(port) {
   return new Promise((done) => {
     const req = request(
@@ -156,11 +184,13 @@ function probe(port) {
       },
       (res) => {
         res.resume();
-        done(res.statusCode === 204);
+        done(
+          res.statusCode === 204 ? (res.headers[SECRET_HEADER] ?? null) : null
+        );
       }
     );
     req.on("timeout", () => req.destroy());
-    req.on("error", () => done(false));
+    req.on("error", () => done(null));
     req.end();
   });
 }
@@ -172,8 +202,15 @@ async function liveServer(root) {
   } catch {
     return null;
   }
-  if (state?.root !== root || !Number.isInteger(state.port)) return null;
-  return (await probe(state.port)) ? state : null;
+  if (
+    state?.root !== root ||
+    !Number.isInteger(state.port) ||
+    typeof state.secret !== "string" ||
+    state.secret.length === 0
+  ) {
+    return null;
+  }
+  return (await probe(state.port)) === state.secret ? state : null;
 }
 
 function openBrowser(url) {
@@ -199,13 +236,16 @@ function parseArgs(args) {
     if (arg === "--open") {
       options.open = true;
     } else if (arg === "--port" || arg === "--idle-minutes") {
-      const value = Number(args[i + 1]);
+      const raw = args[i + 1] ?? "";
+      const value = Number(raw);
       i += 1;
       if (arg === "--port") {
-        if (!Number.isInteger(value) || value < 0 || value > 65535) return null;
+        if (!/^\d+$/.test(raw) || value > 65535) return null;
         options.port = value;
       } else {
-        if (!Number.isFinite(value) || value <= 0) return null;
+        if (raw.trim() === "" || !Number.isFinite(value) || value <= 0) {
+          return null;
+        }
         options.idleMinutes = value;
       }
     } else if (arg.startsWith("-") || options.target !== undefined) {
@@ -225,19 +265,22 @@ function startPreview({
   open = false,
   io,
 }) {
-  const realRoot = realpathSync(root);
+  const realRoot = realpathSync.native(root);
   const stateFile = statePath(realRoot);
+  const secret = randomBytes(16).toString("hex");
   const client = readFileSync(CLIENT_PATH);
   const clients = new Set();
-  const idleMs = idleMinutes * 60_000;
+  const idleMs = Math.min(idleMinutes * 60_000, MAX_TIMER_MS);
   let idleTimer;
   let debounceTimer;
   let watcher;
   let closing;
+  let stateWritten = false;
   let resolveClosed;
   const closed = new Promise((done) => (resolveClosed = done));
 
   function touch() {
+    if (closing) return;
     clearTimeout(idleTimer);
     idleTimer = setTimeout(close, idleMs);
   }
@@ -245,6 +288,16 @@ function startPreview({
   function send(res, status, headers, body, head) {
     res.writeHead(status, { ...BASE_HEADERS, ...headers });
     res.end(head ? undefined : body);
+  }
+
+  // Every file goes through here, index included: a symlink must land inside
+  // root and on nothing hidden, or it does not exist.
+  function realFile(path) {
+    const real = realpathSync.native(path);
+    if (!inside(realRoot, real) || hasDotSegment(relative(realRoot, real))) {
+      return null;
+    }
+    return statSync(real).isFile() ? real : null;
   }
 
   function serveFile(res, path, head) {
@@ -276,6 +329,20 @@ function startPreview({
   }
 
   function handle(req, res) {
+    // A page on another site can point its own name at 127.0.0.1; only our
+    // own names may read the files.
+    const host = req.headers.host;
+    if (
+      host !== `${HOST}:${actualPort}` &&
+      host !== `localhost:${actualPort}`
+    ) {
+      return send(
+        res,
+        403,
+        { "Content-Type": "text/plain; charset=utf-8" },
+        "Forbidden\n"
+      );
+    }
     touch();
     const head = req.method === "HEAD";
     if (req.method !== "GET" && !head) {
@@ -290,7 +357,9 @@ function startPreview({
         head
       );
     const pathname = req.url.split(/[?#]/, 1)[0];
-    if (pathname === "/__crocotaste/ping") return send(res, 204, {}, "", true);
+    if (pathname === "/__crocotaste/ping") {
+      return send(res, 204, { "X-Crocotaste-Preview": secret }, "", true);
+    }
     if (pathname === "/__crocotaste/events") return events(req, res);
     if (pathname === "/__crocotaste/reload.js") {
       return send(
@@ -305,8 +374,15 @@ function startPreview({
     if (path === null) return notFound();
     try {
       if (path === realRoot) {
-        const index = join(realRoot, "index.html");
-        if (existsSync(index)) return serveFile(res, index, head);
+        let index;
+        try {
+          index = realFile(join(realRoot, "index.html"));
+        } catch (error) {
+          if (error.code !== "ENOENT") throw error;
+          index = undefined;
+        }
+        if (index === null) return notFound();
+        if (index) return serveFile(res, index, head);
         const body = Buffer.from(listing(realRoot));
         return send(
           res,
@@ -316,11 +392,8 @@ function startPreview({
           head
         );
       }
-      // A symlink inside root must not reach outside it.
-      if (!statSync(path).isFile() || !inside(realRoot, realpathSync(path))) {
-        return notFound();
-      }
-      return serveFile(res, path, head);
+      const real = realFile(path);
+      return real ? serveFile(res, real, head) : notFound();
     } catch {
       return notFound();
     }
@@ -348,13 +421,13 @@ function startPreview({
       server.closeAllConnections();
     }).then(() => {
       // Only our own state file: a newer preview may have replaced it.
-      try {
-        const state = JSON.parse(readFileSync(stateFile, "utf8"));
-        if (state.pid === process.pid && state.port === actualPort) {
-          rmSync(stateFile, { force: true });
+      if (stateWritten) {
+        try {
+          const state = JSON.parse(readFileSync(stateFile, "utf8"));
+          if (state.secret === secret) rmSync(stateFile, { force: true });
+        } catch {
+          // Already gone.
         }
-      } catch {
-        // Already gone.
       }
       resolveClosed();
     });
@@ -390,15 +463,21 @@ function startPreview({
         openPath ??
         (existsSync(join(realRoot, "index.html")) ? "index.html" : "");
       const url = `http://${HOST}:${actualPort}/${encodePath(page)}`;
-      writeFileSync(
-        stateFile,
-        JSON.stringify({
+      try {
+        writeState(stateFile, {
           pid: process.pid,
           port: actualPort,
           url,
           root: realRoot,
-        })
-      );
+          secret,
+        });
+        stateWritten = true;
+      } catch {
+        // The preview works without it; a second serve just starts another.
+        io?.stderr.write(
+          "Cannot record this preview; it will not be reused.\n"
+        );
+      }
       touch();
       if (open) openBrowser(url);
       ready({ url, port: actualPort, close, closed });
@@ -420,10 +499,12 @@ async function run(args, io) {
     io.stderr.write(`${options.target}: no such file or folder\n`);
     return 2;
   }
-  const root = realpathSync(stats.isDirectory() ? target : dirname(target));
+  const root = realpathSync.native(
+    stats.isDirectory() ? target : dirname(target)
+  );
   const openPath = stats.isDirectory()
     ? undefined
-    : relative(root, realpathSync(target));
+    : relative(root, realpathSync.native(target));
 
   const live = await liveServer(root);
   if (live) {
@@ -459,4 +540,4 @@ async function run(args, io) {
   return 0;
 }
 
-export { run, startPreview };
+export { run, startPreview, statePath };
