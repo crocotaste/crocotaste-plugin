@@ -5,3 +5,4 @@ CHANGELOG.md
 package-lock.json
 .superpowers/
 scripts/test/fixtures/
+skills/handoff/templates/agent-instructions.md

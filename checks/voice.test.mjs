@@ -55,7 +55,11 @@ test("no em dash in any text file", () => {
 
 test("no exclamation mark in prose", () => {
   for (const file of proseFiles()) {
-    const text = prose(readFileSync(join(ROOT, file), "utf8"));
+    // An HTML comment opener is markup, not punctuation: handoff's block markers.
+    const text = prose(readFileSync(join(ROOT, file), "utf8")).replaceAll(
+      "<!--",
+      ""
+    );
     assert.ok(!/!(?![[=])/.test(text), `${file} has an exclamation mark`);
   }
 });
