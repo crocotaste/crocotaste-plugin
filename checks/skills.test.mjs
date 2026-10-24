@@ -41,18 +41,39 @@ test("each SKILL.md has frontmatter name equal to its folder, a description unde
   }
 });
 
+// A path under skills/<name>/ points into another skill and resolves from the
+// repo root; a bare references/, templates/ or scripts/ path resolves from the
+// mentioning skill first.
+function missingPaths(name, body) {
+  const missing = [];
+  for (const path of body.match(
+    /(?:skills\/[\w-]+\/)?(?:references|templates|scripts)\/[\w./-]+/g
+  ) ?? []) {
+    const clean = path.replace(/[.,;:]+$/, "");
+    const found = clean.startsWith("skills/")
+      ? existsSync(join(ROOT, clean))
+      : existsSync(join(SKILLS, name, clean)) || existsSync(join(ROOT, clean));
+    if (!found) missing.push(clean);
+  }
+  return missing;
+}
+
 test("every relative path a SKILL.md mentions exists", () => {
   for (const name of skillFolders()) {
     const { body } = parse(name);
-    for (const path of body.match(
-      /(?:references|templates|scripts)\/[\w./-]+/g
-    ) ?? []) {
-      const clean = path.replace(/[.,;:]+$/, "");
-      const found =
-        existsSync(join(SKILLS, name, clean)) || existsSync(join(ROOT, clean));
-      assert.ok(found, `${name} mentions ${clean}, which does not exist`);
-    }
+    const missing = missingPaths(name, body);
+    assert.deepEqual(missing, [], `${name} mentions missing ${missing}`);
   }
+});
+
+test("a path into another skill resolves from the repo root", () => {
+  assert.deepEqual(
+    missingPaths("extract", "`skills/branding/templates/brief.md`"),
+    []
+  );
+  assert.deepEqual(missingPaths("extract", "`skills/nothing/templates/x.md`"), [
+    "skills/nothing/templates/x.md",
+  ]);
 });
 
 test("no SKILL.md mentions a price, a date offer or the word free about Crocotaste", () => {

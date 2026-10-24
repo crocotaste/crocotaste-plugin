@@ -1,6 +1,14 @@
 # What to read
 
-Read in this order. Skip a step when the search finds nothing, and say so in `## Found in the code`. Exclude `node_modules`, build output (`.next`, `dist`, `build`, `out`) and lock files from every search. Note each value with its path.
+Read in this order. Skip a step when the search finds nothing, and say so in `## Found in the code`. Note each value with its path.
+
+Every search below skips dependencies and build output with the same flags, written out in each command so that each one runs on its own:
+
+```
+--exclude-dir=node_modules --exclude-dir=.next --exclude-dir=dist --exclude-dir=build --exclude-dir=out
+```
+
+Add any other build folder the project has (for example `.svelte-kit`, `.nuxt`, `coverage`) to the same set.
 
 ## 1. Existing design documents
 
@@ -9,13 +17,13 @@ Read in this order. Skip a step when the search finds nothing, and say so in `##
 
 ## 2. Tailwind
 
-- Find: `tailwind.config.*` (v3 and earlier) and any CSS file with `@theme` (v4): `grep -rln "@theme" --include="*.css" .`
+- Find: `tailwind.config.*` (v3 and earlier) and any CSS file with `@theme` (v4): `grep -rln "@theme" --include="*.css" --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=dist --exclude-dir=build --exclude-dir=out .`
 - Take: `theme.colors` and `theme.extend.colors`, `fontFamily`, `borderRadius`, `spacing`, `fontSize`, `boxShadow`, the `darkMode` setting; in v4, every `--color-*`, `--font-*`, `--radius-*`, `--spacing-*`, `--text-*` inside `@theme`.
 - Note: a Tailwind config that only extends the defaults means the brand is mostly Tailwind's palette. Say which default colors are used.
 
 ## 3. CSS custom properties
 
-- Find: the global stylesheet (`globals.css`, `app.css`, `index.css`, `styles/*.css`, `src/styles/*`), then every `:root`, `.dark`, `[data-theme]` and `@media (prefers-color-scheme: dark)` block: `grep -rn -- "--[a-z].*:" --include="*.css" --include="*.scss" .`
+- Find: the global stylesheet (`globals.css`, `app.css`, `index.css`, `styles/*.css`, `src/styles/*`), then every `:root`, `.dark`, `[data-theme]` and `@media (prefers-color-scheme: dark)` block: `grep -rn -- "--[a-z].*:" --include="*.css" --include="*.scss" --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=dist --exclude-dir=build --exclude-dir=out .`
 - Take: each variable and its value in light and in dark. Map each to a role (canvas, surface, text, primary, accent, border, success, warning, danger). Note roles that exist in light but not in dark.
 
 ## 4. Theme files
@@ -25,7 +33,7 @@ Read in this order. Skip a step when the search finds nothing, and say so in `##
 
 ## 5. Fonts
 
-- Find: `next/font` imports (`grep -rn "next/font" .`), `@font-face` rules, `<link>` tags to font hosts in layouts and `index.html`, `@fontsource` packages in `package.json`, font files under `public/` or `assets/`.
+- Find: `next/font` imports (`grep -rn "next/font" --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=dist --exclude-dir=build --exclude-dir=out .`), `@font-face` rules, `<link>` tags to font hosts in layouts and `index.html`, `@fontsource` packages in `package.json`, font files under `public/` or `assets/`.
 - Take: each family, the weights loaded, how it is loaded, and the fallback stack. Note a licensed face (no open source package, a commercial foundry) so the brief can name an open fallback.
 
 ## 6. The component library
@@ -41,11 +49,11 @@ Count imports of each local component and name the top ten. From the repo root:
 grep -rhoE "from ['\"][^'\"]*components/[^'\"]+['\"]" \
   --include="*.tsx" --include="*.ts" --include="*.jsx" --include="*.js" \
   --include="*.vue" --include="*.svelte" --include="*.astro" \
-  --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=dist --exclude-dir=build . \
+  --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=dist --exclude-dir=build --exclude-dir=out . \
   | sed -E "s/.*components\/([^'\"]+)['\"]/\1/" | sort | uniq -c | sort -rn | head -10
 ```
 
-Adjust the pattern to the project's alias (`@/components/`, `$lib/components/`, `~/components/`). If the project imports from a single barrel file, count the named imports instead.
+The pattern already matches aliased imports (`@/components/`, `$lib/components/`, `~/components/`) and relative ones that pass through a `components/` folder. What it misses is relative imports between files inside the components folder (`from "./button"`); for those, run the same count inside that folder with `from ['\"]\./[^'\"]+['\"]`, and add the two counts per component. If the project imports from a single barrel file, count the named imports instead.
 
 Then open each of the ten and read:
 
@@ -55,7 +63,7 @@ Then open each of the ten and read:
 
 ## 8. Hard-coded values across the code
 
-- Find: hex colors outside the token files: `grep -rnoE "#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b" --include="*.tsx" --include="*.jsx" --include="*.vue" --include="*.svelte" --include="*.css" --exclude-dir=node_modules .`; Tailwind arbitrary values: `grep -rnoE "\[(#|[0-9]+px)[^]]*\]" --include="*.tsx" --include="*.jsx" --exclude-dir=node_modules .`
+- Find: hex colors outside the token files: `grep -rnoE "#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b" --include="*.tsx" --include="*.jsx" --include="*.vue" --include="*.svelte" --include="*.css" --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=dist --exclude-dir=build --exclude-dir=out .`; Tailwind arbitrary values: `grep -rnoE "\[(#|[0-9]+px)[^]]*\]" --include="*.tsx" --include="*.jsx" --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=dist --exclude-dir=build --exclude-dir=out .`
 - Take: each value that duplicates or competes with a token, with how many files use it. These feed `## Inconsistencies`.
 
 ## 9. Logo and icons

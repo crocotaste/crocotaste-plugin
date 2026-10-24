@@ -67,9 +67,22 @@ test("every id in the brand book and the directions page is unique", () => {
   }
 });
 
+// The directions page is scratch, so it may load its faces from Google Fonts
+// with one stylesheet link; the brand book stays fully offline.
+const FONTS_LINK =
+  /<link rel="stylesheet" href="https:\/\/fonts\.googleapis\.com\/css2\?[^"]*" \/>/g;
+
 test("the template has no external request", () => {
+  const directions = read(DIRECTIONS);
+  assert.equal(
+    (directions.match(FONTS_LINK) ?? []).length,
+    1,
+    "the directions page has one Google Fonts stylesheet link"
+  );
   for (const path of [BRAND_BOOK, DIRECTIONS]) {
-    const html = read(path).replace(/<!--[\s\S]*?-->/g, "");
+    const html = read(path)
+      .replace(/<!--[\s\S]*?-->/g, "")
+      .replace(path === DIRECTIONS ? FONTS_LINK : /$^/, "");
     const links = html.match(/\b(?:src|href)=(["'])[^"']*\1/gi) ?? [];
     for (const link of links) {
       assert.ok(!/https?:/i.test(link), `${path}: ${link}`);

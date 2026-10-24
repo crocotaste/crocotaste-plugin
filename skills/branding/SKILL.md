@@ -51,8 +51,13 @@ When you know enough to draw, show it.
    - set its colors, faces (`--font-display`, `--font-body`), radii and display weight and tracking as tokens, light and dark both chosen, not copied;
    - name it in two or three words and write one line on what it is, in the section's `dir-head` and in the page header's list;
    - make the directions really different: a temperature, a type voice, a shape. Three shades of one idea is one direction.
-3. Put the product's name in `<title>`, in the page `<h1>`, and in each `s-brand` wordmark. Swap the specimen copy (the clinic words) for this product's own: a real nav, a real headline, a real card.
-4. With two directions, delete section C, its CSS overrides and its line in the header list.
+3. Load the faces. The `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?…">` in the head lists the template's Sample faces; replace its `family=` list with the open faces your directions use, each with the weights you set (for example `family=Fraunces:wght@400;600`). A face not on Google Fonts, a system face or a licensed face shows as its fallback here: tell the user so in one line ("Söhne is licensed, so you are seeing its fallback, Inter"). Do not add font files or a fonts token block to this page; the brand book inlines faces later.
+4. Replace every Sample string with the product's own:
+   - `<title>Sample · Directions</title>`;
+   - the `<h1>` "Three directions for Sample" (say "Two directions" when there are two) and the intro paragraph under it, "Each direction is the same handful of screen parts…";
+   - the wordmark text `Sample` inside each `s-brand`, and the `aria-label="Sample app, light"` and `aria-label="Sample app, dark"` on every nav specimen;
+   - the specimen copy (the clinic words: Today, Week, Patients, the headline, the buttons, Maria Bianchi, Luca Ferri) for this product's own: a real nav, a real headline, a real card.
+     With two directions, also delete section C, its two CSS override blocks and its line in the header list.
 5. Start the preview as a background command (it stays in the foreground until stopped, so never wait on it):
 
    ```bash
@@ -80,7 +85,7 @@ When the user has picked a direction:
 2. Write values, not adjectives: hex for every color role in light and dark, the face names and their fallbacks, the radii in px, the display weight.
 3. Play it back in a few lines (the feel words, the palette, the faces, the shape) and ask: "Is this the brand? Say yes, or what to change."
 4. Change what they ask and play it back again. Wait for an explicit yes.
-5. Once approved, delete `docs/design/directions.html`. It was scratch; the brief is what lasts.
+5. Once approved, stop the background `serve` command, then delete `docs/design/directions.html`. It was scratch; the brief is what lasts.
 
 ## 6. Hand-off
 

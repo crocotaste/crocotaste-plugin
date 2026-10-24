@@ -14,9 +14,9 @@ Some users have design reference servers installed, for example Mobbin, Refero o
 
 When you have web search or fetch, use it to look at the sites the user named, at the product's category, and at the faces you are considering. Read a site's public CSS only to learn what it does (its font stack, its accent, its radius), and say it in words. Check that a face you propose is open and available, and name its license family (for example SIL Open Font License) in the brief.
 
-## 4. The public DESIGN.md collection
+## 4. Public collections of DESIGN.md files
 
-The `awesome-design-md` collection on GitHub gathers design system descriptions of well-known products. Use it as vocabulary only: how others name roles, scales and rules, so that the brief speaks precisely. Never take a palette, a face set or a rule from it as this product's own.
+Public collections of DESIGN.md files describe the design systems of well-known products. If you come across one, use it as vocabulary only: how others name roles, scales and rules, so that the brief speaks precisely. Never take a palette, a face set or a rule from it as this product's own.
 
 ## When nothing is available
 

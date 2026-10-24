@@ -26,31 +26,31 @@ As you read, keep a list of every value with the file and line it came from. Eve
 
 ## 3. Write the brief
 
-Create `docs/design` if needed and write `docs/design/brief.md` with these sections, in this order:
+Copy the brief template, the same one `crocotaste:branding` fills:
 
-1. `# Brand brief: <product name>` (the name from `package.json`, the README or the app's `<title>`).
-2. `## Product and people`: what the product is and who uses it, from the README and the app's copy. Mark what you inferred as inferred.
-3. `## Feel`: three words that describe what the code actually looks like, and why (dense tables, 4px corners, one blue: "exact, dense, plain").
-4. `## References and what was taken`: an existing `DESIGN.md` or `BRAND.html` and any library the look comes from (for example "shadcn/ui defaults, retuned"). Write "None found" if there is none.
-5. `## Color`: each role with its hex in light and in dark, the token name that holds it, and what primary and accent are used for in the code.
-6. `## Type`: the display, body and mono faces with their fallback stacks, how they are loaded, the sizes and weights actually in use.
-7. `## Shape and density`: the radii, border weight and spacing scale in use.
-8. `## Motion`: the durations and easing in use, or "Barely any".
-9. `## Voice`: how the interface speaks, with two lines quoted from the UI copy.
-10. `## Rejected, with reasons`: leave as "Nothing yet" unless the user rejects something during this skill.
-11. `## Found in the code`: one bullet per token source, each with its path and what it holds: "`app/globals.css`: 24 color variables in `:root` and `.dark`, the radius scale." Then the top ten components by import count with their paths and counts, and the logo files found.
-12. `## Inconsistencies`: one entry per conflict. Each entry names the role, lists every competing value with its path and how often it appears, and ends with one question:
+```bash
+mkdir -p docs/design && cp "${CLAUDE_PLUGIN_ROOT}/skills/branding/templates/brief.md" docs/design/brief.md
+```
 
-    ```markdown
-    ### Primary blue
+Fill each of its sections from what the code shows, replacing every italic line. Take the product name from `package.json`, the README or the app's `<title>`. Mark anything inferred (who the people are, the feel words) as inferred. Write "None found" under References when nothing was found, and "Nothing yet" under Rejected unless the user rejects something during this skill. Give the token name next to every value under Color, Type and Shape.
 
-    - `#2563eb` in `tailwind.config.ts` (`primary`), used in 41 files
-    - `#3b82f6` hard-coded in `components/button.tsx` and 6 others
+Then add two sections at the end:
 
-    Which blue is the primary: `#2563eb`, `#3b82f6`, or a new one?
-    ```
+- `## Found in the code`: one bullet per token source, each with its path and what it holds: "`app/globals.css`: 24 color variables in `:root` and `.dark`, the radius scale." Then the top ten components by import count with their paths and counts, and the logo files found.
+- `## Inconsistencies`: one entry per conflict. Each entry names the role, lists every competing value with its path and how often it appears, and ends with one question:
 
-What counts as an inconsistency: two values for one role, hard-coded colors or sizes that bypass the tokens, more than two display faces, a radius scale with near duplicates (6px and 8px both used for cards), a dark theme missing roles the light theme has, text on background pairs that look low in contrast.
+  ```markdown
+  ### Primary blue
+
+  - `#2563eb` in `tailwind.config.ts` (`primary`), used in 41 files
+  - `#3b82f6` hard-coded in `components/button.tsx` and 6 others
+
+  Which blue is the primary: `#2563eb`, `#3b82f6`, or a new one?
+  ```
+
+What counts as an inconsistency: two values for one role, hard-coded colors or sizes that bypass the tokens, more than two display faces, a radius scale with near duplicates (6px and 8px both used for cards), a dark theme missing roles the light theme has, and text or UI on a background below the WCAG 2 contrast ratio.
+
+For contrast, compute the WCAG 2 ratio from the hex values for every text and background pair you found, in light and in dark: relative luminance of each color, then (lighter + 0.05) / (darker + 0.05). Flag a pair under 4.5:1 for body text, or under 3:1 for large text (24px, or 19px bold) and for UI edges such as input borders and focus rings. Write the number in the entry: "`#94a3b8` on `#ffffff` is 2.6:1, under 4.5:1 for body text".
 
 ## 4. Settle each inconsistency
 

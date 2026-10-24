@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Sample · Directions</title>
     <!-- Copy this file, fill two or three directions from the brief, delete the rest. Every color, length and face is a token. -->
+    <!-- A scratch page, so the faces load from the network. The brand book inlines its chosen faces later. -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Fraunces:wght@400;500;600&family=Source+Sans+3:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" />
     <style>
     :root {
     --color-canvas: #fbfaf8;
@@ -76,12 +78,47 @@
 
     /* Direction A keeps the base colors with tighter corners: calm, dense, teal. */
     [data-direction="A"] {
+    --color-canvas: #fbfaf8;
+    --color-surface: #f3f1ec;
+    --color-surface-raised: #ffffff;
+    --color-border: #e3dfd7;
+    --color-border-strong: #8f897e;
+    --color-text: #1c1a17;
+    --color-text-muted: #5a554d;
+    --color-text-faint: #7a746a;
+    --color-primary: #0f6b60;
+    --color-primary-hover: #0b5a51;
+    --color-primary-active: #084a42;
+    --color-primary-text: #ffffff;
+    --color-primary-soft: #dcefea;
+    --color-accent: #c0532a;
+    --color-warning: #a35f00;
+    --color-focus: var(--color-primary);
     --radius-sm: 4px;
     --radius-md: 6px;
     --radius-lg: 10px;
     --text-display-weight: 600;
     --text-display-tracking: -0.02em;
     --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
+    --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+    }
+    [data-direction="A"] [data-theme="dark"] {
+    --color-canvas: #121211;
+    --color-surface: #1a1917;
+    --color-surface-raised: #23221f;
+    --color-border: #302e2a;
+    --color-border-strong: #6e6960;
+    --color-text: #f2f0eb;
+    --color-text-muted: #b3ada2;
+    --color-text-faint: #8c867b;
+    --color-primary: #5cc6b4;
+    --color-primary-hover: #7dd3c4;
+    --color-primary-active: #a0e0d4;
+    --color-primary-text: #0b1f1b;
+    --color-primary-soft: #16302b;
+    --color-accent: #e8875c;
+    --color-warning: #e2a447;
+    --color-focus: var(--color-primary);
     }
 
     [data-direction="B"] {
