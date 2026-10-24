@@ -1,6 +1,3 @@
-const TOKENS_START = "<!-- tokens:start -->";
-const TOKENS_END = "<!-- tokens:end -->";
-
 const VAR_REFERENCE = /var\(\s*--([\w-]+)\s*(?:,[^)]*)?\)/g;
 const DARK_SELECTOR = /\[data-theme\s*=\s*(["'])dark\1\]/;
 
@@ -72,9 +69,12 @@ function readBlock(html, name) {
   if (to === -1) throw new TokenBlockError(`Missing marker ${close}`);
   let start = from + open.length;
   let end = to;
+  // Each side is judged alone, so a bare marker never strands half a comment.
   if (/\/\*[ \t]*$/.test(html.slice(0, from))) {
-    start += html.slice(start).match(/^[ \t]*(\*\/)?/)[0].length;
-    end -= html.slice(0, to).match(/(\/\*)?[ \t]*$/)[0].length;
+    start += html.slice(start).match(/^[ \t]*\*\//)?.[0].length ?? 0;
+  }
+  if (/^[ \t]*\*\//.test(html.slice(to + close.length))) {
+    end -= html.slice(0, to).match(/\/\*[ \t]*$/)?.[0].length ?? 0;
   }
   return { css: html.slice(start, end), start, end };
 }

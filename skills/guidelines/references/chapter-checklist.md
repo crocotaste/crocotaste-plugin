@@ -46,7 +46,7 @@ Answer every line yes or no before the brand book is shown. A no is fixed, not e
 
 - Is there a usage line for every component, specific to this product?
 - Are all fourteen components present, each with its states visible at rest, in light and in dark?
-- Do the specimens use this product's labels and data instead of appointments and patients?
+- Does every specimen speak in this product's words (names, actions, amounts), in the light instance and in the dark pocket?
 - Do `data-tokens` on each light instance name the tokens the component really uses?
 
 ## 08 Motion

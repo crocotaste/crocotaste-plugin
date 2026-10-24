@@ -59,6 +59,14 @@ test("the template's samples are listed and every data-fill is in the list", () 
   assert.deepEqual(listed, samples);
 });
 
+test("every id in the brand book and the directions page is unique", () => {
+  for (const path of [BRAND_BOOK, DIRECTIONS]) {
+    const ids = [...read(path).matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]);
+    const repeated = ids.filter((id, i) => ids.indexOf(id) !== i);
+    assert.deepEqual(repeated, [], `${path} repeats an id`);
+  }
+});
+
 test("the template has no external request", () => {
   for (const path of [BRAND_BOOK, DIRECTIONS]) {
     const html = read(path).replace(/<!--[\s\S]*?-->/g, "");

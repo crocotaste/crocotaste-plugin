@@ -30,6 +30,16 @@ test("markers inside a css comment leave the comment out of the block", () => {
   assert.equal(parseTokens(css).light.get("a"), "1");
 });
 
+test("a bare start and a wrapped end leave no half comment in the block", () => {
+  const html =
+    "<style>\n<!-- tokens:start -->\n:root { --a: 1; }\n/* <!-- tokens:end --> */\n</style>";
+  const { css } = readTokenBlock(html);
+  assert.equal(css, "\n:root { --a: 1; }\n");
+  const reversed =
+    "<style>\n/* <!-- tokens:start --> */\n:root { --a: 1; }\n<!-- tokens:end -->\n</style>";
+  assert.equal(readTokenBlock(reversed).css, "\n:root { --a: 1; }\n");
+});
+
 test("readTokenBlock throws naming a missing marker", () => {
   const html = fixture.replace("<!-- tokens:end -->", "");
   assert.throws(
