@@ -116,6 +116,16 @@ for (const slug of examples()) {
     }
   });
 
+  test(`${slug}: the mockups index links every screen`, () => {
+    const index = read(join(dir, "mockups", "index.html"));
+    for (const file of screensOf(slug)) {
+      assert.ok(
+        new RegExp(`href=(["'])(\\./)?${file}\\1`).test(index),
+        `${slug}/mockups/index.html does not link ${file}`
+      );
+    }
+  });
+
   test(`${slug}: no em dash and no home path in any file`, () => {
     for (const path of filesUnder(dir)) {
       const text = read(path);

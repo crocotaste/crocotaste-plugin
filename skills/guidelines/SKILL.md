@@ -31,7 +31,7 @@ All commands run from the root of the user's repo.
 2. Name it. Replace every `Sample` in `BRAND.html` with the product's name, spelled and cased as the brand writes it: the `<title>` becomes `<Name> · Design guidelines` (the `tokens` command takes the name from it), and the wordmark spans and the cover follow. `grep -n Sample BRAND.html` lists every place.
 
 3. Set the tokens from the brief, light and dark. They live in the `<style>` between the `tokens:start` and `tokens:end` markers: `:root` for light, `[data-theme="dark"]` for dark.
-   - Change values only. Keep every token name, add none, remove none.
+   - Change values only. Keep every token name, add none, remove none. A few page CSS rules outside the tokens block are fine when they use only tokens and serve the brand (for example `font-variant-numeric: tabular-nums` for a brand that aligns figures); token names are never added or removed.
    - Colors: each role takes the brief's hex. Choose every dark value on purpose (a dark primary is lighter and calmer than the light one, a dark canvas is rarely pure black); never copy a light value into dark.
    - Faces: `--font-display`, `--font-body` and `--font-mono` each name the brief's face first, then its fallback stack.
    - Type, space, radius, shadow and motion: the brief's base size, display weight and tracking, radii in px, and durations. Where the brief is silent, keep the template's value only if it fits the feel words.
@@ -75,7 +75,7 @@ All commands run from the root of the user's repo.
 
 8. Write the DESIGN.md body by following `references/writing-design-md.md`: every section in prose bullets, each rule citing `BRAND.html chapter NN`, values named by reference to the frontmatter and never repeated, and `## Decisions` holding the brief's "Rejected, with reasons" as `### Title` entries. Replace every placeholder comment.
 
-9. If `npx @google/design.md` is available, lint the file and fix every error it reports. Its warnings that `borderColor` is not a known component sub-token are expected and stay: the reviewer that reads DESIGN.md understands it. If the package cannot be installed (no network, no npm), skip this step; it is not a problem.
+9. If `npx @google/design.md` is available, lint the file and fix every error it reports. Warnings about `borderColor` are expected and stay; only errors are fixed. If the package cannot be installed (no network, no npm), skip this step; it is not a problem.
 
    ```bash
    npx @google/design.md lint DESIGN.md
