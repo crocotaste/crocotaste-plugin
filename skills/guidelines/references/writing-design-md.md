@@ -19,15 +19,17 @@ The `tokens` command writes these headings on a new file; keep them in this orde
 | `## Overview`          | The product in one line, the three feel words, the principles and the mark rule | 01, 02          |
 | `## Colors`            | What each role is for, what primary and accent are never for, dark mode rules   | 03              |
 | `## Typography`        | Which face for what, the scale steps and when to use each, numbers and length   | 04              |
-| `## Layout`            | The spacing steps and where each is used, density, the breakpoints' changes     | 05, 10          |
+| `## Layout`            | The spacing steps and where each is used, and how dense a screen is             | 05              |
 | `## Elevation & Depth` | What floats and which shadow it gets, borders instead of shadows elsewhere      | 05              |
 | `## Shapes`            | Which radius goes on what, and where corners are never rounded                  | 05              |
 | `## Components`        | One bullet per component that needs a rule beyond its frontmatter entry         | 07              |
-| `## Do's and Don'ts`   | The voice chapter's do and don't pairs, as real strings                         | 09              |
+| `## Do's and Don'ts`   | Chapter 09's do and don't list, as pairs of real strings, nothing else          | 09              |
 | `## Motion` (new)      | Where motion appears, which duration, and that it stops with reduced motion     | 08              |
-| `## Voice` (new)       | How the product speaks, the words it uses and the words it never uses           | 09              |
+| `## Voice` (new)       | Tone, vocabulary, the words it never uses, capitalisation and punctuation rules | 09              |
 | `## Responsive` (new)  | What changes at each breakpoint, target size, focus, contrast                   | 10              |
 | `## Decisions`         | Every decision taken and every option rejected, with the reason                 | the brief       |
+
+Each rule lives in one section only. Do's and Don'ts holds the example pairs, Voice holds the rules behind them, and Responsive holds everything about breakpoints; never write the same rule in two places.
 
 If `npx @google/design.md lint` reports one of the three new sections as unknown or misplaced, move its bullets into the closest standard section (Motion into Components, Voice into Do's and Don'ts, Responsive into Layout) rather than dropping them.
 

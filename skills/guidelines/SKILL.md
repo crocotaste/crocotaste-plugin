@@ -15,7 +15,7 @@ This skill writes two files at the root of the user's repo: `BRAND.html`, the vi
 - If `docs/design/brief.md` is missing, or still holds the template's italic lines, or the user never approved it, stop and offer to make one: `crocotaste:extract` when the repo already has UI code, `crocotaste:branding` otherwise. "There is no approved brief yet. Should we start with the brand?"
 - If `BRAND.html` or `DESIGN.md` already exists, never overwrite it silently. Say which exists and what would change, then wait for a yes:
   - `BRAND.html`: "There is already a BRAND.html. We would rebuild it from the brief: new tokens, and every chapter's copy rewritten. Go ahead?" On a yes, edit that file in place instead of copying the template in step 2.1.
-  - `DESIGN.md`: "There is already a DESIGN.md. Only its frontmatter would be merged with the new tokens; every key we do not own stays, and the Decisions section stays word for word. Go ahead?" On a yes, edit the body section by section in step 2.9 and never remove an existing decision.
+  - `DESIGN.md`: "There is already a DESIGN.md. Its frontmatter would be merged with the new tokens, keeping every key we do not own. Its body sections would be rewritten from the brand book, keeping anything that is still true, and every entry under Decisions stays word for word. Go ahead?" On a yes, edit the body section by section in step 2.8 and never edit or remove an existing decision.
 - Read the whole brief before writing anything. Keep it open: every step below takes its values from it.
 
 All commands run from the root of the user's repo.
@@ -64,15 +64,7 @@ All commands run from the root of the user's repo.
    node "${CLAUDE_PLUGIN_ROOT}/scripts/crocotaste.mjs" check BRAND.html
    ```
 
-7. Start the preview as a background command (it stays in the foreground until stopped, so never wait on it). It prints one JSON line with the url, opens the browser and reloads the page on every change. If a preview of the same file is already running, it reuses it.
-
-   ```bash
-   node "${CLAUDE_PLUGIN_ROOT}/scripts/crocotaste.mjs" serve BRAND.html --open
-   ```
-
-   If it fails, open the file directly (`open BRAND.html` on macOS) or give the user the path. Do not tell the user the page is ready yet.
-
-8. Derive the DESIGN.md frontmatter from the tokens:
+7. Derive the DESIGN.md frontmatter from the tokens:
 
    ```bash
    node "${CLAUDE_PLUGIN_ROOT}/scripts/crocotaste.mjs" tokens BRAND.html DESIGN.md --write
@@ -80,29 +72,37 @@ All commands run from the root of the user's repo.
 
    It writes colors (dark values as `dark-*` keys), spacing, rounded, typography and components in the DESIGN.md format, merges them into an existing file without deleting keys it does not own, and keeps the body byte for byte. On a new file it also writes the body's section headings, each with a placeholder comment.
 
-9. Write the DESIGN.md body by following `references/writing-design-md.md`: every section in prose bullets, each rule citing `BRAND.html chapter NN`, values named by reference to the frontmatter and never repeated, and `## Decisions` holding the brief's "Rejected, with reasons" as `### Title` entries. Replace every placeholder comment.
+8. Write the DESIGN.md body by following `references/writing-design-md.md`: every section in prose bullets, each rule citing `BRAND.html chapter NN`, values named by reference to the frontmatter and never repeated, and `## Decisions` holding the brief's "Rejected, with reasons" as `### Title` entries. Replace every placeholder comment.
 
-10. If `npx @google/design.md` is available, lint the file and fix what it reports. If the package cannot be installed (no network, no npm), skip this step; it is not a problem.
+9. If `npx @google/design.md` is available, lint the file and fix what it reports. If the package cannot be installed (no network, no npm), skip this step; it is not a problem.
 
-    ```bash
-    npx @google/design.md lint DESIGN.md
-    ```
+   ```bash
+   npx @google/design.md lint DESIGN.md
+   ```
 
 ## 3. Review
 
 A fresh pair of eyes catches what the author no longer sees.
 
-1. Dispatch a fresh general-purpose subagent with the Agent tool (the Task tool in some harnesses). Its prompt is the full text of `references/reviewer-prompt.md`, pasted as is, with the repo's absolute path and the plugin's absolute path filled in where it asks. The reviewer reads the brief, `BRAND.html` and `DESIGN.md`, runs `check`, answers every line of the chapter checklist, and returns problems only. It edits nothing.
+1. Dispatch a fresh general-purpose subagent with the Agent tool (the Task tool in some harnesses). Its prompt is the text of `references/reviewer-prompt.md` below its line, pasted as is after filling in the two absolute paths it asks for: the repo root, and the plugin root (`${CLAUDE_PLUGIN_ROOT}` as it reads in this skill, already resolved to a real path; the subagent cannot resolve it). The reviewer reads the brief, `BRAND.html` and `DESIGN.md`, runs `check`, answers every line of the chapter checklist, and returns problems only. It edits nothing.
 2. If the harness has no way to dispatch a subagent, do the review yourself in a fresh pass: reread the brief, then answer every line of `references/chapter-checklist.md` against the files as if seeing them for the first time. Tell the user in one line that the review was done in the same session.
-3. Fix every problem it returns. A problem is fixed, not explained. Then run `check` and `tokens` again (the commands in step 2.6 and 2.8) until `check` reports `0 problems`.
-4. Only now tell the user, in a few lines: the page is open at the url `serve` printed, what is in it (the feel words, the palette, the faces), whether the faces are inlined or shown as fallbacks, and that `DESIGN.md` carries the same system for coding agents. Then ask one question: "What would you change?"
+3. Fix every problem it returns. A problem is fixed, not explained. Then run `check` and `tokens` again (the commands in steps 2.6 and 2.7) until `check` reports `0 problems`.
+4. Start the preview as a background command (it stays in the foreground until stopped, so never wait on it). It prints one JSON line with the url, opens the browser and reloads the page on every change. If a preview of the same file is already running, it reuses it.
+
+   ```bash
+   node "${CLAUDE_PLUGIN_ROOT}/scripts/crocotaste.mjs" serve BRAND.html --open
+   ```
+
+   If it fails, open the file directly (`open BRAND.html` on macOS) or give the user the path.
+
+5. In the same message, tell the user in a few lines: the page is open at the url `serve` printed, what is in it (the feel words, the palette, the faces), whether the faces are inlined or shown as fallbacks, and that `DESIGN.md` carries the same system for coding agents. Then ask one question: "What would you change?"
 
 ## 4. Iterate
 
 - Every change happens in the chat and lands in `BRAND.html` first; the preview reloads on its own.
 - After each change, run `check`, then `tokens BRAND.html DESIGN.md --write`, and update any DESIGN.md body line the change made wrong.
 - A decision the user makes along the way ("no, never orange") goes into `## Decisions` as a new `### Title` entry with the reason and the rejected option.
-- A large change (a new palette, a new face) goes back through the review in section 3 before the user sees it.
+- A large change (a new palette, a new face) goes back through the review in section 3, steps 1 to 3, before the user hears about it. Do not run `serve` again: the running preview has already reloaded.
 
 ## 5. Hand-off
 

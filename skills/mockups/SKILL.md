@@ -21,7 +21,7 @@ All commands run from the root of the user's repo.
 
 ## 2. Choose the first screen
 
-If the user named a screen, start with it. Otherwise ask one question, with a suggestion of three screens named from the brief: the main screen, the one people return to most, and a form or settings screen. "We could start with Today, Book a slot, or Settings. Which first?"
+If the user named a screen, start with it. Otherwise ask one question, with a suggestion of three screens named from the brief: the main screen, the one people return to most, and a form or settings screen. For a reading app: "We could start with Library, Now reading, or Settings. Which first?"
 
 One screen at a time: build it, preview it, iterate until the user is happy, then the next.
 
@@ -30,7 +30,7 @@ One screen at a time: build it, preview it, iterate until the user is happy, the
 1. Copy the template under a kebab-case name for the screen. If the file already exists, ask before replacing it.
 
    ```bash
-   mkdir -p docs/design/mockups && cp "${CLAUDE_PLUGIN_ROOT}/skills/mockups/templates/mockup.html" docs/design/mockups/today.html
+   mkdir -p docs/design/mockups && cp "${CLAUDE_PLUGIN_ROOT}/skills/mockups/templates/mockup.html" docs/design/mockups/<kebab-name>.html
    ```
 
 2. Set the head:
@@ -46,7 +46,15 @@ One screen at a time: build it, preview it, iterate until the user is happy, the
    - The faces arrive through the token block's `--font-*` families and the fonts block, both copied from `BRAND.html` by `sync`. Never edit either block by hand.
    - Lay it out for a narrow window too, following chapter 10's breakpoints: nothing clipped, nothing scrolling sideways.
 
-4. Bring the screen in line with the brand book and rebuild the index. Run it after every edit that touches the token or fonts block, after `BRAND.html` changes, after adding a screen, and before every preview.
+4. Check both themes before the user sees the screen. Reread the screen's CSS as it applies in light and in dark: every color must be a `var(--color-…)` token that has a value in both `:root` and `[data-theme="dark"]`, and nothing may be hard-coded. List any raw hex or px outside the token and fonts blocks; it must print nothing:
+
+   ```bash
+   sed '/fonts:start/,/fonts:end/d; /tokens:start/,/tokens:end/d' docs/design/mockups/<kebab-name>.html | grep -nE "#[0-9a-fA-F]{3,8}\b|[0-9]px"
+   ```
+
+   Replace every line it prints with the matching token.
+
+5. Bring the screen in line with the brand book and rebuild the index. Run it after every edit that touches the token or fonts block, after `BRAND.html` changes, after adding a screen, and before every preview.
 
    ```bash
    node "${CLAUDE_PLUGIN_ROOT}/scripts/crocotaste.mjs" sync BRAND.html docs/design/mockups
@@ -54,7 +62,7 @@ One screen at a time: build it, preview it, iterate until the user is happy, the
 
    It writes the brand book's token and fonts blocks into every screen and rewrites `index.html` from each screen's title and description. Never edit `index.html` by hand; `sync` replaces it every time. A line `skipped <file>: no tokens markers` means that file lost its markers: copy them back from the template.
 
-5. Start the preview once, as a background command (it stays in the foreground until stopped, so never wait on it). It prints one JSON line with the url, opens the index in the browser, reloads on every change, and reuses a preview of the same folder that is already running.
+6. Start the preview once, as a background command (it stays in the foreground until stopped, so never wait on it). It prints one JSON line with the url, opens the index in the browser, reloads on every change, and reuses a preview of the same folder that is already running.
 
    ```bash
    node "${CLAUDE_PLUGIN_ROOT}/scripts/crocotaste.mjs" serve docs/design/mockups --open
@@ -62,7 +70,7 @@ One screen at a time: build it, preview it, iterate until the user is happy, the
 
    If it fails, open `docs/design/mockups/index.html` directly or give the user the path.
 
-6. Tell the user the screen is up, in one line with the url, and ask one question: "What would you change?" Look at it in light and in dark (the toggle in the corner) before asking.
+7. Tell the user the screen is up, in one line with the url, and ask one question: "What would you change?"
 
 ## 4. Iterate
 
