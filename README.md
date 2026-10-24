@@ -1,10 +1,10 @@
 # Crocotaste plugin
 
-Your brand, design guidelines and mockups, made with your coding agent. Then Crocotaste keeps every pull request on-system.
+A Claude Code plugin for your brand, design guidelines and mockups, made with your coding agent. Then Crocotaste keeps every pull request on-system.
 
 ## Install
 
-The short form, one command from your shell:
+The short form, one command from your shell (Claude Code 2.1.292 or later):
 
 ```bash
 claude plugin install crocotaste --marketplace crocotaste/crocotaste-plugin
@@ -22,7 +22,9 @@ Then start with `/crocotaste:branding` for a new product, or `/crocotaste:extrac
 ## What you get
 
 ```text
-brief -> BRAND.html -> DESIGN.md -> mockups -> handoff -> install
+branding --> guidelines --> mockups --> handoff --> install
+               ^
+extract -------+
 ```
 
 - `/crocotaste:branding`: brainstorm the brand with you, the feel, references, palette, type and shape, shown as directions in the browser, ending in an approved brief.
@@ -47,7 +49,7 @@ docs/design/mockups/*.html     one mockup per screen, and an index
 
 - The tokens live once, in `BRAND.html`. A small script derives the rest: the `DESIGN.md` frontmatter and the tokens inside every mockup.
 - The script checks the brand book for broken rules, low contrast and drift, and serves a read-only live preview on localhost.
-- Nothing leaves your machine. The only network call fetches open fonts, when you ask for them. No account is needed, and the script has no dependencies.
+- Your files stay on your machine. The only network requests go to Google Fonts: the directions page loads its faces from there, and `fonts` downloads open fonts when you ask. No account is needed, and the script has no dependencies.
 - A file that exists is never overwritten silently. The skills ask first, and the decisions you wrote in `DESIGN.md` are kept word for word.
 
 ## Then Crocotaste

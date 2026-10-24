@@ -8,7 +8,6 @@
     {
       "name": "crocotaste",
       "description": "Your brand, design guidelines and mockups, made with your coding agent. Then Crocotaste keeps every pull request on-system.",
-      "version": "1.0.0",
       "source": "./",
       "author": {
         "name": "Crocotaste"

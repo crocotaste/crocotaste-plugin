@@ -15,5 +15,5 @@
     "mockups",
     "claude-code"
   ],
-  "icon": "./.claude-plugin/icon.png"
+  "icon": "./icon.png"
 }

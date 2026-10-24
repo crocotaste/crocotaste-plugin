@@ -8,7 +8,7 @@ For contributors and coding agents working on the plugin itself, not for people 
 
 | Path              | What                                                                     |
 | ----------------- | ------------------------------------------------------------------------ |
-| `.claude-plugin/` | `plugin.json`, `marketplace.json` and the icon                           |
+| `.claude-plugin/` | `plugin.json` and `marketplace.json`; the icon is `icon.png` at the root |
 | `skills/`         | the six skills, one folder each with a `SKILL.md`, references, templates |
 | `scripts/`        | `crocotaste.mjs`, the command line tool the skills call, and its tests   |
 | `checks/`         | tests for the repo's own rules (manifests, skills, copy, guards)         |
@@ -20,7 +20,7 @@ For contributors and coding agents working on the plugin itself, not for people 
 ## Commands
 
 ```bash
-npm ci               # install; also switches on the Git hooks
+npm install          # install; also switches on the Git hooks
 npm run check        # format:check, then the tests
 npm run format       # Prettier
 npm run validate     # claude plugin validate --strict
@@ -59,6 +59,6 @@ node scripts/crocotaste.mjs help   # check, tokens, sync, serve, fonts
 
 ## Claude Code
 
-- Claude Code reads this file directly; there is no `CLAUDE.md` here, because `claude plugin validate --strict` flags one at a plugin's root.
+- Claude Code reads this file directly (Claude Code 2.1.277 or later); there is no `CLAUDE.md` here, because `claude plugin validate --strict` flags one at a plugin's root.
 - No edit hook formats files here. Run `npm run format` before you commit.
 - `.claude/settings.json` denies skipping the Git hooks, changing `core.hooksPath` and editing `.githooks/`.

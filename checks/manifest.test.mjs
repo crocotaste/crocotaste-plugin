@@ -27,7 +27,9 @@ test("marketplace.json is the same plugin from this repo", () => {
   assert.ok(marketplace.owner.name);
   assert.equal(marketplace.plugins[0].name, "crocotaste");
   assert.equal(marketplace.plugins[0].source, "./");
-  assert.equal(marketplace.plugins[0].version, plugin.version);
+  // plugin.json is the one source of the version.
+  assert.equal(marketplace.plugins[0].version, undefined);
+  assert.ok(plugin.version);
 });
 
 test("every skill folder has a SKILL.md and no other folder is a skill", () => {

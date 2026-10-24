@@ -4,7 +4,7 @@
 
 Please report it privately through GitHub: open the repository's **Security** tab and choose **Report a vulnerability**. Do not open a public issue for it.
 
-Tell us what you found, how to reproduce it, and what it lets someone do. We reply in the same report, fix it on a branch, and credit you in the release notes if you want.
+Tell us what you found, how to reproduce it, and what it lets someone do. We reply in the same report and fix it on a branch.
 
 ## Scope
 
