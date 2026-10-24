@@ -1,6 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { run } from "../lib/cli.mjs";
@@ -80,7 +86,7 @@ test("skips a file without markers, names it and leaves it untouched", async () 
     readFileSync(join(mockups, "backwards.html"), "utf8"),
     backwards
   );
-  assert.equal(result.out, "synced 1 screens, skipped 2, index rebuilt\n");
+  assert.equal(result.out, "synced 1 screen, skipped 2, index rebuilt\n");
   assert.equal(result.code, 0);
 });
 
@@ -169,4 +175,47 @@ test("an unreadable brand book exits 1, wrong usage exits 2", async () => {
   assert.equal((await sync(dir, [])).code, 2);
   assert.equal((await sync(dir, ["a", "b", "c"])).code, 2);
   assert.ok(!existsSync(mockups));
+});
+
+test("a directory named like a screen is ignored", async () => {
+  const { dir, brandPath, mockups } = setup();
+  await sync(dir, [brandPath, mockups]);
+  mkdirSync(join(mockups, "nested.html"));
+  writeFileSync(join(mockups, "a.html"), screen("A", ""));
+  const result = await sync(dir, [brandPath, mockups]);
+  assert.equal(result.code, 0);
+  assert.equal(result.err, "");
+  assert.equal(result.out, "synced 1 screen, skipped 0, index rebuilt\n");
+});
+
+test("a brand book without fonts markers syncs with an empty fonts block", async () => {
+  const { dir, mockups } = setup();
+  const bare = join(dir, "nofonts.html");
+  writeFileSync(bare, brand.replace(/<!-- fonts:(start|end) -->/g, ""));
+  writeFileSync(join(dir, "x.html"), "");
+  await sync(dir, [bare, mockups]);
+  writeFileSync(join(mockups, "a.html"), screen("A", ""));
+  const result = await sync(dir, [bare, mockups]);
+  assert.equal(result.code, 0);
+  assert.equal(
+    readBlock(readFileSync(join(mockups, "a.html"), "utf8"), "fonts").css,
+    ""
+  );
+});
+
+test("a data-content attribute is not the description", async () => {
+  const { dir, brandPath, mockups } = setup();
+  await sync(dir, [brandPath, mockups]);
+  writeFileSync(
+    join(mockups, "a.html"),
+    screen("A", "real").replace(
+      '<meta name="description"',
+      '<meta data-content="wrong" name="description"'
+    )
+  );
+  await sync(dir, [brandPath, mockups]);
+  assert.match(
+    readFileSync(join(mockups, "index.html"), "utf8"),
+    /<span>real<\/span>/
+  );
 });

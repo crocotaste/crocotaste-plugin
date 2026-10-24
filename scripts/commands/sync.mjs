@@ -1,10 +1,4 @@
-import {
-  existsSync,
-  mkdirSync,
-  readdirSync,
-  readFileSync,
-  writeFileSync,
-} from "node:fs";
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { readBlock, TokenBlockError } from "../lib/css-tokens.mjs";
 
@@ -54,7 +48,8 @@ function describe(html, file) {
   const meta = [...html.matchAll(/<meta\b(?:[^>"']|"[^"]*"|'[^']*')*>/gi)]
     .map((m) => m[0])
     .find((tag) => /\bname=(["'])description\1/i.test(tag));
-  const description = meta?.match(/\bcontent=(["'])([\s\S]*?)\1/i)?.[2] ?? "";
+  const description =
+    meta?.match(/(?<![\w-])content=(["'])([\s\S]*?)\1/i)?.[2] ?? "";
   return {
     file,
     title: decode(title.trim().replace(/ · Mockup$/, "")),
@@ -82,10 +77,13 @@ function run(args, io) {
   let blocks;
   try {
     const brand = readFileSync(brandPath, "utf8");
-    blocks = {
-      tokens: readBlock(brand, "tokens").css,
-      fonts: readBlock(brand, "fonts").css,
-    };
+    blocks = { tokens: readBlock(brand, "tokens").css, fonts: "" };
+    // A brand book without fonts markers simply has no fonts to copy.
+    try {
+      blocks.fonts = readBlock(brand, "fonts").css;
+    } catch (error) {
+      if (!(error instanceof TokenBlockError)) throw error;
+    }
   } catch (error) {
     if (error instanceof TokenBlockError) {
       io.stderr.write(`${args[0]}: ${error.message}\n`);
@@ -97,8 +95,14 @@ function run(args, io) {
 
   const dir = resolve(io.cwd, args[1]);
   mkdirSync(dir, { recursive: true });
-  const files = readdirSync(dir)
-    .filter((name) => name.endsWith(".html") && name !== "index.html")
+  const files = readdirSync(dir, { withFileTypes: true })
+    .filter(
+      (entry) =>
+        entry.isFile() &&
+        entry.name.endsWith(".html") &&
+        entry.name !== "index.html"
+    )
+    .map((entry) => entry.name)
     .sort();
   const screens = [];
   let skipped = 0;
@@ -124,7 +128,7 @@ function run(args, io) {
   );
   writeFileSync(join(dir, "index.html"), index);
   io.stdout.write(
-    `synced ${screens.length} screens, skipped ${skipped}, index rebuilt\n`
+    `synced ${screens.length} ${screens.length === 1 ? "screen" : "screens"}, skipped ${skipped}, index rebuilt\n`
   );
   return 0;
 }

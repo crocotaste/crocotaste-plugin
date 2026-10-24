@@ -114,8 +114,8 @@
     img, svg { display: block; max-width: 100%; }
     button, input, select, textarea { font: inherit; color: inherit; }
     a { color: var(--color-primary); }
-    :focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
-    main { max-width: 960px; margin: 0 auto; padding: var(--space-16) var(--space-6); }
+    :focus-visible { outline: var(--space-1) solid var(--color-focus); outline-offset: var(--space-1); }
+    main { max-width: 60rem; margin: 0 auto; padding: var(--space-16) var(--space-6); }
     h1 {
       font-family: var(--font-display), system-ui, sans-serif;
       font-size: var(--text-title);
@@ -125,7 +125,7 @@
     .lede { margin-top: var(--space-2); color: var(--color-text-muted); }
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
       gap: var(--space-4);
       margin-top: var(--space-8);
     }
