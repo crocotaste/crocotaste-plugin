@@ -81,8 +81,12 @@ async function fontFaceCss(css2, download, keepSubsets = ["latin"]) {
     const match = rule.match(SRC_URL);
     if (!match) continue;
     // Only the first url() is checked and inlined; a second would land in
-    // the book as it came.
-    if ((rule.match(/url\(/g) ?? []).length > 1) {
+    // the book as it came. CSS escapes could spell one past the count, and
+    // Google writes none, so a backslash is refused outright.
+    if (rule.includes("\\")) {
+      throw new FontRefusal("refusing a font face with a backslash");
+    }
+    if ((rule.match(/url\s*\(/gi) ?? []).length > 1) {
       throw new FontRefusal("refusing a font face with more than one url()");
     }
     if (!match[2].startsWith(FONT_HOST)) {

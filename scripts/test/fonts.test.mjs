@@ -201,6 +201,16 @@ test("a face with a second url() is refused", async () => {
     fontFaceCss(doubled, async () => BYTES),
     /refusing a font face with more than one url\(\)/
   );
+  const upper = doubled.replace("url(https://evil", "URL(https://evil");
+  await assert.rejects(
+    fontFaceCss(upper, async () => BYTES),
+    /refusing a font face with more than one url\(\)/
+  );
+  const escaped = doubled.replace("url(https://evil", "u\\72 l(https://evil");
+  await assert.rejects(
+    fontFaceCss(escaped, async () => BYTES),
+    /refusing a font face with a backslash/
+  );
 });
 
 test("an over-cap body is refused", async () => {

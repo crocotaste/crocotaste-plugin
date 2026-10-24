@@ -1,4 +1,5 @@
 const DARK_SELECTOR = /\[data-theme\s*=\s*(["'])dark\1\]/;
+const MAX_VALUE_LENGTH = 16 * 1024;
 
 const REQUIRED_TOKENS = [
   "color-canvas",
@@ -165,8 +166,10 @@ function splitVar(inner) {
   return [inner.trim(), undefined];
 }
 
-// Fallbacks may hold another var(), so substitution recurses into them.
-function substitute(text, lookup, seen) {
+// Fallbacks may hold another var(), so substitution recurses into them. A
+// value that doubles at every level would otherwise grow without bound, so
+// one over the cap is left unresolved.
+function substitute(text, lookup) {
   let out = "";
   let from = 0;
   let resolved = true;
@@ -176,10 +179,10 @@ function substitute(text, lookup, seen) {
     if (close === -1) return { value: text, resolved: false };
     const [reference, fallback] = splitVar(text.slice(open + 1, close));
     let value = /^--[\w-]+$/.test(reference)
-      ? lookup(reference.slice(2), seen)
+      ? lookup(reference.slice(2))
       : undefined;
     if (value === undefined && fallback !== undefined) {
-      const inner = substitute(fallback, lookup, seen);
+      const inner = substitute(fallback, lookup);
       if (inner.resolved) value = inner.value;
     }
     if (value === undefined) {
@@ -187,39 +190,43 @@ function substitute(text, lookup, seen) {
       value = text.slice(at, close + 1);
     }
     out += text.slice(from, at) + value;
+    if (out.length > MAX_VALUE_LENGTH) return { value: text, resolved: false };
     from = close + 1;
     at = text.indexOf("var(", from);
   }
   return { value: out + text.slice(from), resolved };
 }
 
+// Every name is resolved once. A name on a cycle is unresolved whatever its
+// fallback says, as in a browser, and a reference to it takes the
+// referrer's fallback; so a name's result never depends on the path to it
+// and can be kept.
 function resolveSet(set, fallback) {
-  // Outside a cycle a name's result does not depend on the path to it, so
-  // remembering it keeps a fallback that names a token twice per level
-  // from resolving in exponential time.
   const memo = new Map();
-  let cycleHits = 0;
-  const lookup = (name, seen) => {
+  const stack = [];
+  const cyclic = new Set();
+  const lookup = (name) => {
     if (memo.has(name)) return memo.get(name);
     const raw = set.get(name) ?? fallback?.get(name);
     if (raw === undefined) return undefined;
-    if (seen.has(name)) {
-      cycleHits += 1;
+    const open = stack.indexOf(name);
+    if (open !== -1) {
+      for (const member of stack.slice(open)) cyclic.add(member);
       return undefined;
     }
-    const hitsBefore = cycleHits;
-    const { value, resolved } = substitute(
-      raw,
-      lookup,
-      new Set(seen).add(name)
-    );
-    const out = resolved && !value.includes("var(") ? value : undefined;
-    if (cycleHits === hitsBefore) memo.set(name, out);
+    stack.push(name);
+    const { value, resolved } = substitute(raw, lookup);
+    stack.pop();
+    const out =
+      resolved && !cyclic.has(name) && !value.includes("var(")
+        ? value
+        : undefined;
+    memo.set(name, out);
     return out;
   };
   const result = new Map();
   for (const name of set.keys()) {
-    result.set(name, lookup(name, new Set()) ?? set.get(name));
+    result.set(name, lookup(name) ?? set.get(name));
   }
   return result;
 }

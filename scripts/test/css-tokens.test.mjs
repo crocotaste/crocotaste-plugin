@@ -115,12 +115,29 @@ test("parseTokens resolves a chain of fallbacks in linear time", () => {
   const { light } = parseTokens(`:root { ${lines.join(" ")} }`);
   assert.ok(performance.now() - started < 1000);
   assert.equal(light.get("t40"), "var(--t39, var(--t39))");
-  // A fallback that only a cycle reaches is not remembered for the top level.
-  const cyclic = parseTokens(
-    ":root { --a: var(--b, #111); --b: var(--a, #222); }"
+});
+
+test("parseTokens leaves a value that doubles at every level unresolved", () => {
+  const lines = ["--t0: #123456;"];
+  for (let i = 1; i <= 40; i++) {
+    lines.push(`--t${i}: var(--t${i - 1}) var(--t${i - 1});`);
+  }
+  const started = performance.now();
+  const { light } = parseTokens(`:root { ${lines.join(" ")} }`);
+  assert.ok(performance.now() - started < 1000);
+  assert.equal(light.get("t1"), "#123456 #123456");
+  assert.equal(light.get("t40"), "var(--t39) var(--t39)");
+});
+
+test("parseTokens treats every name on a cycle as unresolved, fallback or not", () => {
+  const { light } = parseTokens(
+    ":root { --a: var(--b, #111); --b: var(--a, #222); --c: var(--a, #333); --d: #fff; --e: var(--d) var(--a); }"
   );
-  assert.equal(cyclic.light.get("a"), "#222");
-  assert.equal(cyclic.light.get("b"), "#111");
+  assert.equal(light.get("a"), "var(--b, #111)");
+  assert.equal(light.get("b"), "var(--a, #222)");
+  assert.equal(light.get("c"), "#333");
+  assert.equal(light.get("d"), "#fff");
+  assert.equal(light.get("e"), "var(--d) var(--a)");
 });
 
 test("parseColor handles hex, rgb, rgba, hsl and rejects names", () => {
