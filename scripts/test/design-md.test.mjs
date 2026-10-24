@@ -33,11 +33,20 @@ test("frontmatterFromTokens maps the four sections and typography styles", () =>
     fontSize: "16px",
     fontWeight: 400,
     lineHeight: 1.5,
-    letterSpacing: "0",
+    letterSpacing: "0em",
   });
   assert.equal(fm.typography.display.letterSpacing, "-0.02em");
   assert.equal(fm.typography["display-weight"], undefined);
   assert.equal(fm.colors.focus, "#2456e6");
+});
+
+test("a bare 0 tracking becomes 0em and an em value stays as is", () => {
+  const css = parseTokens(
+    ":root{--font-body:Inter;--text-body:16px;--text-body-family:body;--text-body-tracking:0;--text-title:24px;--text-title-family:body;--text-title-tracking:-0.025em;}"
+  );
+  const fm = frontmatterFromTokens(css, { components: {}, warnings: [] });
+  assert.equal(fm.typography.body.letterSpacing, "0em");
+  assert.equal(fm.typography.title.letterSpacing, "-0.025em");
 });
 
 test("dark values that differ become dark-<name>", () => {
@@ -90,7 +99,7 @@ test("mergeFrontmatter keeps unknown keys and the version", () => {
   assert.equal(merged.version, "alpha");
   assert.equal(merged.name, "Sample");
   assert.equal(merged.description, "mine");
-  assert.equal(merged.typography.body.letterSpacing, "0");
+  assert.equal(merged.typography.body.letterSpacing, "0em");
 });
 
 test("mergeFrontmatter on nothing adds the name from the title", () => {

@@ -42,10 +42,10 @@ All commands run from the root of the user's repo.
    node "${CLAUDE_PLUGIN_ROOT}/scripts/crocotaste.mjs" check BRAND.html
    ```
 
-4. Inline the faces. For every face that is on Google Fonts, list it with the weights the tokens use:
+4. Inline the faces. For every face that is on Google Fonts, list it with the weights the tokens use. A variable face is given as a range (`"Inter:wght@400..700"`), one file for the whole range; discrete weights (`"Lora:wght@400;600"`) are for static faces, and each weight listed is one more file inlined, so list only the weights the tokens use.
 
    ```bash
-   node "${CLAUDE_PLUGIN_ROOT}/scripts/crocotaste.mjs" fonts BRAND.html "Fraunces:wght@400;600" "Inter:wght@400;500;600"
+   node "${CLAUDE_PLUGIN_ROOT}/scripts/crocotaste.mjs" fonts BRAND.html "Inter:wght@400..700"
    ```
 
    It downloads the open faces and writes them as base64 into the fonts block, so the page works offline. If it fails (no network, a licensed face, a face not on Google Fonts), keep the fallback stack in the tokens, say so in chapter 04's lede ("Söhne is licensed, so this page shows its fallback, Inter"), and tell the user in one line. Run it again whenever a face or weight changes.
@@ -54,7 +54,8 @@ All commands run from the root of the user's repo.
    - read its lines in `references/chapter-checklist.md` first; they are the standard the chapter is held to;
    - rewrite the text of every element with a `data-fill` attribute in that chapter, keeping the element and its attribute, in the brand's own words from the brief;
    - rewrite the specimen copy that has no `data-fill` too: in chapter 07, every label, button, name, amount and row, in the light instance and again in the dark pocket; in chapter 06, swap any icon that stands for nothing this product does for one that does, drawn on the same 24 px grid with the same stroke;
-   - keep each component's `data-component`, `data-state` and `data-tokens`, and update `data-tokens` if the component now uses other tokens.
+   - keep each component's `data-component`, `data-state` and `data-tokens`, and update `data-tokens` if the component now uses other tokens;
+   - leave the book's own chrome as it is: the cover chips, the state captions such as "Selected, hover, focus, default and disabled, left to right.", the table's rows label, the sidebar foot and the footer lines. Only product copy changes.
 
    The mark: the placeholder squircle and its callout in chapter 02 stay unless the user gives a mark of their own. If they do, replace the path inside `<symbol id="brand-mark">` (its `viewBox` is `0 0 100 100`), keep the four sizes and the clear space, and remove the callout.
 
@@ -74,7 +75,7 @@ All commands run from the root of the user's repo.
 
 8. Write the DESIGN.md body by following `references/writing-design-md.md`: every section in prose bullets, each rule citing `BRAND.html chapter NN`, values named by reference to the frontmatter and never repeated, and `## Decisions` holding the brief's "Rejected, with reasons" as `### Title` entries. Replace every placeholder comment.
 
-9. If `npx @google/design.md` is available, lint the file and fix what it reports. If the package cannot be installed (no network, no npm), skip this step; it is not a problem.
+9. If `npx @google/design.md` is available, lint the file and fix every error it reports. Its warnings that `borderColor` is not a known component sub-token are expected and stay: the reviewer that reads DESIGN.md understands it. If the package cannot be installed (no network, no npm), skip this step; it is not a problem.
 
    ```bash
    npx @google/design.md lint DESIGN.md

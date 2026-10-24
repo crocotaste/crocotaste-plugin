@@ -5,7 +5,7 @@ Answer every line yes or no before the brand book is shown. A no is fixed, not e
 ## 01 Foundations
 
 - Does the product line say what this product is and who it is for, in two sentences?
-- Are the three feel words this brand's words, from the brief, and not Calm, Exact, Warm?
+- Are the three feel words this brand's words, from the brief? At most one may match the template's Calm, Exact, Warm, and only when it is the brief's own word.
 - Does each principle name a real tie it decides, one this team will meet?
 - Would a stranger tell this brand from another after reading only this chapter?
 
@@ -39,7 +39,7 @@ Answer every line yes or no before the brand book is shown. A no is fixed, not e
 ## 06 Iconography
 
 - Does the rule line give the stroke or fill, the grid and the corner style of the set this brand uses?
-- Do the eight icons stand for actions this product has?
+- Do the eight icons stand for things this product shows or does?
 - Does every icon in the page sit beside a word or carry an accessible label?
 
 ## 07 Components

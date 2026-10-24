@@ -12,7 +12,7 @@ Some users have design reference servers installed, for example Mobbin, Refero o
 
 ## 3. Web search and fetch
 
-When you have web search or fetch, use it to look at the sites the user named, at the product's category, and at the faces you are considering. Read a site's public CSS only to learn what it does (its font stack, its accent, its radius), and say it in words. Check that a face you propose is open and available, and name its license family (for example SIL Open Font License) in the brief.
+When you have web search or fetch, use it to look at the sites the user named, at the product's category, and at the faces you are considering. Read a site's public CSS only to learn what it does (its font stack, its accent, its radius), and say it in words. Check that a face you propose is open and available, and name its license family (for example SIL Open Font License) in the brief. Prefer open faces whose names carry no company name, since the face's name ends up in the brand book.
 
 ## 4. Public collections of DESIGN.md files
 

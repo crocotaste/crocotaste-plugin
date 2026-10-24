@@ -35,6 +35,12 @@ function numeric(value) {
   return /^-?\d+(\.\d+)?$/.test(value) ? Number(value) : value;
 }
 
+// Google's DESIGN.md lint rejects a unitless 0 as a dimension, and older brand
+// books still carry one.
+function dimension(value) {
+  return value === "0" ? "0em" : value;
+}
+
 function firstFamily(value) {
   return value
     .split(",")[0]
@@ -70,7 +76,7 @@ function typographyOf(light) {
     style.fontSize = size;
     if (weight !== undefined) style.fontWeight = numeric(weight);
     if (leading !== undefined) style.lineHeight = numeric(leading);
-    if (tracking !== undefined) style.letterSpacing = tracking;
+    if (tracking !== undefined) style.letterSpacing = dimension(tracking);
     styles[name] = style;
   }
   return styles;

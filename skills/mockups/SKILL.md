@@ -38,8 +38,8 @@ One screen at a time: build it, preview it, iterate until the user is happy, the
    - `<meta name="description" content="">` gets one line on what the screen is for and who uses it; the index shows it under the name.
 
 3. Build the screen inside `<main>`, replacing the template's comment there.
-   - Use the brand's components. Take each component's markup from chapter 07 of `BRAND.html`, and copy its CSS rules from the brand book's `<style>` into the mockup's `<style>`, replacing the template's starter `.btn`, `.input`, `.card` and `.nav` rules where the brand book has its own. Show a component at rest, in the state the screen would really be in.
-   - Tokens only. Every color, space, radius, size, shadow and duration is a `var(--…)` from the token block. No raw hex, rgb or px in the screen's CSS; borders use `--border-width`.
+   - Use the brand's components. Take each component's markup from chapter 07 of `BRAND.html` and rebuild its styles in the mockup's `<style>`, using only the token names, in place of the template's starter `.btn`, `.input`, `.card` and `.nav` rules. Do not paste the book's CSS rules: they use lengths that exist only in the book. Show a component at rest, in the state the screen would really be in.
+   - Tokens only. Every color, space, radius, size, shadow and duration is a `var(--…)` from the token block. No raw hex, rgb or px in the screen's CSS; borders use `--border-width`. The rule is tokens only, not token values only: a few local rules outside the token block are fine when they use only tokens, for example `font-variant-numeric: tabular-nums` for figures or right-aligned amounts.
    - Icons from chapter 06: copy the `<symbol>` elements the screen needs into an inline `<svg>` at the top of `<body>`, and pair each icon with a word or an accessible label.
    - Words in the brand's voice (chapter 09), with realistic content: real names, real amounts, a full row of a table, not lorem ipsum.
    - Plain HTML and CSS, self-contained. No JavaScript framework, no external request (no CDN, no web font link, no remote image). Keep the template's theme toggle and its small script; add no other script.
@@ -60,7 +60,7 @@ One screen at a time: build it, preview it, iterate until the user is happy, the
    node "${CLAUDE_PLUGIN_ROOT}/scripts/crocotaste.mjs" sync BRAND.html docs/design/mockups
    ```
 
-   It writes the brand book's token and fonts blocks into every screen and rewrites `index.html` from each screen's title and description. Never edit `index.html` by hand; `sync` replaces it every time. A line `skipped <file>: no tokens markers` means that file lost its markers: copy them back from the template.
+   It writes the brand book's token and fonts blocks into every screen and rewrites `index.html` from each screen's title and description. Each screen gets its own copy of the inlined fonts so it stands alone, which makes every mockup at least as large as the fonts block: inline only the weights the brand uses. Never edit `index.html` by hand; `sync` replaces it every time. A line `skipped <file>: no tokens markers` means that file lost its markers: copy them back from the template.
 
 6. Start the preview once, as a background command (it stays in the foreground until stopped, so never wait on it). It prints one JSON line with the url, opens the index in the browser, reloads on every change, and reuses a preview of the same folder that is already running.
 
