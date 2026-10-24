@@ -28,7 +28,8 @@ const COMMANDS = new Map([
     "serve",
     {
       summary: "Serve BRAND.html and the mockups on localhost",
-      usage: "crocotaste serve [--port <n>]",
+      usage:
+        "crocotaste serve <file-or-dir> [--open] [--port N] [--idle-minutes N]",
       load: () => import("../commands/serve.mjs"),
     },
   ],
