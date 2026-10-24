@@ -2,7 +2,9 @@
   "name": "crocotaste",
   "version": "1.0.0",
   "description": "Your brand, design guidelines and mockups, made with your coding agent. Then Crocotaste keeps every pull request on-system.",
-  "author": { "name": "Crocotaste" },
+  "author": {
+    "name": "Crocotaste"
+  },
   "homepage": "https://www.crocotaste.com",
   "repository": "https://github.com/crocotaste/crocotaste-plugin",
   "license": "MIT",
@@ -12,5 +14,6 @@
     "brand-guidelines",
     "mockups",
     "claude-code"
-  ]
+  ],
+  "icon": "./.claude-plugin/icon.png"
 }
