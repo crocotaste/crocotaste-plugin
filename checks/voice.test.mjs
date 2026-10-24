@@ -35,14 +35,41 @@ function prose(text) {
     .join("\n");
 }
 
+function isFile(file) {
+  return existsSync(join(ROOT, file)) && statSync(join(ROOT, file)).isFile();
+}
+
+// Every markdown file people or agents read as copy: the root docs, the skills
+// and the eval cases.
 function proseFiles() {
   return committableFiles(ROOT).filter(
     (file) =>
-      existsSync(join(ROOT, file)) &&
-      statSync(join(ROOT, file)).isFile() &&
-      (file === "README.md" ||
-        (file.startsWith("skills/") && file.endsWith(".md")))
+      isFile(file) &&
+      file.endsWith(".md") &&
+      (!file.includes("/") ||
+        file.startsWith("skills/") ||
+        file.startsWith("evals/"))
   );
+}
+
+function templateFiles() {
+  return committableFiles(ROOT).filter(
+    (file) =>
+      isFile(file) && /^skills\/[^/]+\/templates\/[^/]+\.html$/.test(file)
+  );
+}
+
+// What a reader sees: no style, no script, no comments, no tags.
+function visibleText(html) {
+  return html
+    .replace(/<style\b[\s\S]*?<\/style>/gi, " ")
+    .replace(/<script\b[\s\S]*?<\/script>/gi, " ")
+    .replace(/<!--[\s\S]*?-->/g, " ")
+    .replace(/<[^>]*>/g, " ");
+}
+
+function hasExclamation(text) {
+  return /!(?![[=]|important)/.test(text);
 }
 
 test("no em dash in any text file", () => {
@@ -60,6 +87,26 @@ test("no exclamation mark in prose", () => {
       "<!--",
       ""
     );
-    assert.ok(!/!(?![[=])/.test(text), `${file} has an exclamation mark`);
+    assert.ok(!hasExclamation(text), `${file} has an exclamation mark`);
   }
+});
+
+test("no exclamation mark in the visible text of the html templates", () => {
+  const files = templateFiles();
+  assert.ok(files.length >= 3, "the html templates were not found");
+  for (const file of files) {
+    const text = visibleText(readFileSync(join(ROOT, file), "utf8"));
+    assert.ok(!hasExclamation(text), `${file} has an exclamation mark`);
+  }
+});
+
+test("the voice check sees an exclamation mark in copy but not in markup", () => {
+  assert.ok(hasExclamation(visibleText("<p>Done!</p>")));
+  assert.ok(
+    !hasExclamation(
+      visibleText(
+        "<!DOCTYPE html><!-- note! --><style>a { color: red !important; }</style><script>if (!a) b();</script><p>Done.</p>"
+      )
+    )
+  );
 });

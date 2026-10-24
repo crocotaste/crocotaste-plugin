@@ -4,7 +4,11 @@
       "Bash(git * --no-verify*)",
       "Bash(git commit -n*)",
       "Bash(git * core.hooksPath*)",
-      "Edit(./.githooks/**)"
+      "Edit(./.githooks/**)",
+      "Bash(git commit * -n*)",
+      "Bash(git commit * --no-verify*)",
+      "Edit(./checks/guards.mjs)",
+      "Write(./checks/guards.mjs)"
     ]
   }
 }

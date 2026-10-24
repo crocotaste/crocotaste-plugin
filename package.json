@@ -11,7 +11,7 @@
     "check": "npm run format:check && npm run test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "validate": "npx -y @anthropic-ai/claude-code@latest plugin validate --strict .",
+    "validate": "npx -y @anthropic-ai/claude-code@2.1.308 plugin validate --strict .",
     "prepare": "node -e \"try { require('node:child_process').execFileSync('git', ['config', 'core.hooksPath', '.githooks'], { stdio: 'ignore' }) } catch {}\""
   },
   "devDependencies": {

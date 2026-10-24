@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { MAX_BYTES, committableFiles, scanText } from "./guards.mjs";
+import { MAX_BYTES, committableFiles, scanPath, scanText } from "./guards.mjs";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 
@@ -108,6 +108,70 @@ test("every committable file passes and is under 1 MB", () => {
   }
 });
 
+test("flags the agent footer and an AI trailer by its address", () => {
+  const made = "Generated ";
+  const samples = [
+    made + "with [Cla" + "ude Code](https://example.com)",
+    made + "by [Cur" + "sor](https://example.com)",
+    made + "with (Co" + "dex)",
+    "Co-Authored-By: Someone <noreply@" + "anthro" + "pic.com>",
+    "Co-authored-by: A Bot <bot@" + "open" + "ai.com>",
+  ];
+  for (const sample of samples) {
+    assert.ok(scanText("a.txt", sample).length >= 1, sample);
+  }
+  assert.deepEqual(
+    scanText("a.txt", "Co-Authored-By: A Person <a@example.com>"),
+    []
+  );
+});
+
+test("flags the newer token shapes", () => {
+  const samples = [
+    "gh" + "s_" + "a".repeat(36),
+    "gh" + "u_" + "a".repeat(36),
+    "gh" + "r_" + "a".repeat(36),
+    "sk-" + "proj-" + "a".repeat(20),
+    "AI" + "za" + "a".repeat(35),
+    "sk" + "_live_" + "a".repeat(20),
+    "rk" + "_live_" + "a".repeat(20),
+    "np" + "m_" + "a".repeat(36),
+    "AS" + "IA" + "A".repeat(16),
+    "gl" + "pat-" + "a".repeat(20),
+    "xo" + "xe-" + "1234567890",
+    "xo" + "xs-" + "1234567890",
+    "my" + "sql://user:" + "secret@db.example.com/app",
+    "mon" + "godb://user:" + "secret@db.example.com/app",
+    "mon" + "godb+srv://user:" + "secret@cluster.example.com/app",
+  ];
+  for (const sample of samples) {
+    assert.ok(scanText("a.txt", `value ${sample}`).length >= 1, sample);
+  }
+});
+
+test("a committed .env file is a finding, the example is not", () => {
+  const env = "." + "env";
+  for (const path of [
+    env,
+    `${env}.local`,
+    `app/${env}`,
+    `app/${env}.production`,
+  ]) {
+    assert.equal(scanPath(path).length, 1, path);
+  }
+  for (const path of [
+    `${env}.example`,
+    `app/${env}.example`,
+    "envelope.txt",
+    `docs/${env}rc`,
+  ]) {
+    assert.deepEqual(scanPath(path), [], path);
+  }
+  for (const file of committableFiles(ROOT)) {
+    assert.deepEqual(scanPath(file), [], file);
+  }
+});
+
 const CLI = join(ROOT, "checks", "guards.mjs");
 
 function run(args, cwd = ROOT) {
@@ -157,5 +221,14 @@ test("--staged refuses a file over 1 MB", () => {
   execFileSync("git", ["init", "-q"], { cwd: repo });
   writeFileSync(join(repo, "big.txt"), "a".repeat(MAX_BYTES + 1));
   execFileSync("git", ["add", "big.txt"], { cwd: repo });
+  assert.equal(run(["--staged"], repo).status, 1);
+});
+
+test("--staged refuses a staged .env file", () => {
+  const repo = mkdtempSync(join(tmpdir(), "guards-env-"));
+  execFileSync("git", ["init", "-q"], { cwd: repo });
+  const env = "." + "env";
+  writeFileSync(join(repo, env), "NAME=value\n");
+  execFileSync("git", ["add", "-f", env], { cwd: repo });
   assert.equal(run(["--staged"], repo).status, 1);
 });

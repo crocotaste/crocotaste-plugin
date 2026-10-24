@@ -7,14 +7,30 @@ export const MAX_BYTES = 1_048_576;
 // Patterns are assembled from parts so this file never matches itself.
 const TOOLS = "claude|chatgpt|copilot|gemini|cursor|codex";
 const SAFE_HOSTS = "localhost|127\\.0\\.0\\.1|db|host\\.docker\\.internal";
+const AI_DOMAINS = ["anthropic", "openai"].join("|");
+// Any .env file is a secret store; only the documented example is committed.
+const ENV_FILE = /(^|\/)\.env(\..+)?$/;
+const ENV_EXAMPLE = /(^|\/)\.env\.example$/;
 
 const PATTERNS = [
   ["a private key block", /-----BEGIN [A-Z ]*PRIVATE KEY-----/],
-  ["a GitHub token", /\b(?:ghp_|gho_|github_pat_)[A-Za-z0-9_]{36,}/],
+  [
+    "a GitHub token",
+    /\b(?:ghp_|gho_|ghs_|ghu_|ghr_|github_pat_)[A-Za-z0-9_]{36,}/,
+  ],
   ["an Anthropic key", /\bsk-ant-[A-Za-z0-9_-]{20,}/],
+  ["an OpenAI project key", /\bsk-proj-[A-Za-z0-9_-]{20,}/],
   ["an API key", /\bsk-[A-Za-z0-9]{32,}/],
-  ["an AWS access key", /\bAKIA[0-9A-Z]{16}/],
-  ["a Slack token", /\bxox[abp]-[0-9A-Za-z-]{10,}/],
+  ["a Google API key", /\bAIza[0-9A-Za-z_-]{35}/],
+  ["a Stripe live key", /\b(?:sk|rk)_live_[A-Za-z0-9]{20,}/],
+  ["an npm token", /\bnpm_[A-Za-z0-9]{36}/],
+  ["an AWS access key", /\b(?:AKIA|ASIA)[0-9A-Z]{16}/],
+  ["a GitLab token", /\bglpat-[A-Za-z0-9_-]{20}/],
+  ["a Slack token", /\bxox[abpes]-[0-9A-Za-z-]{10,}/],
+  [
+    "a database url with a password",
+    /\b(?:mysql|mongodb(?:\+srv)?):\/\/[^:\s]+:[^@\s]+@/i,
+  ],
   [
     "a database url with a password",
     new RegExp(
@@ -32,7 +48,11 @@ const PATTERNS = [
   ],
   [
     "an AI attribution line",
-    new RegExp(`generated (?:with|by) (?:${TOOLS})`, "i"),
+    new RegExp(`co-authored-by:.*<[^>]*@(?:${AI_DOMAINS})\\.com>`, "i"),
+  ],
+  [
+    "an AI attribution line",
+    new RegExp(`generated (?:with|by) [\\[(]?(?:${TOOLS})`, "i"),
   ],
 ];
 
@@ -61,6 +81,12 @@ export function scanText(path, text) {
   return problems;
 }
 
+export function scanPath(path) {
+  return ENV_FILE.test(path) && !ENV_EXAMPLE.test(path)
+    ? [`${path} is an env file; keep it out of the repo`]
+    : [];
+}
+
 export function committableFiles(root) {
   const out = git(root, [
     "ls-files",
@@ -87,6 +113,7 @@ function scanStaged(root) {
     .filter((file) => file && !/(^|\/)(node_modules|\.git)\//.test(file));
   const problems = [];
   for (const file of names) {
+    problems.push(...scanPath(file));
     let content;
     try {
       content = git(root, ["show", `:${file}`]);

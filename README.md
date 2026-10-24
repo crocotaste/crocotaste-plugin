@@ -43,18 +43,20 @@ BRAND.html                     the brand book, where the tokens live
 DESIGN.md                      the design system, for agents and for review
 docs/design/brief.md           the approved brief
 docs/design/mockups/*.html     one mockup per screen, and an index
+CLAUDE.md or AGENTS.md         one marked block that points agents at the design system
+.gitattributes                 two lines that mark BRAND.html and the mockups as generated
 ```
 
 ## How it works
 
 - The tokens live once, in `BRAND.html`. A small script derives the rest: the `DESIGN.md` frontmatter and the tokens inside every mockup.
-- The script checks the brand book for broken rules, low contrast and drift, and serves a read-only live preview on localhost.
-- Your files stay on your machine. The only network requests go to Google Fonts: the directions page loads its faces from there, and `fonts` downloads open fonts when you ask. No account is needed, and the script has no dependencies.
+- The script checks the brand book for broken rules, missing tokens and components, and low contrast, and serves a read-only live preview on localhost.
+- Your files stay on your machine. The script makes one kind of network request: `fonts` downloads open fonts from Google Fonts when you ask. The skills may also run `npx @google/design.md` and `gh api`, and the directions page loads its faces from Google Fonts. No account is needed, and the script has no dependencies.
 - A file that exists is never overwritten silently. The skills ask first, and the decisions you wrote in `DESIGN.md` are kept word for word.
 
 ## Then Crocotaste
 
-Crocotaste reviews every pull request against your `DESIGN.md` and posts cited findings with ready-made fixes. [How it works with the plugin](https://www.crocotaste.com/docs/plugin).
+Crocotaste reviews every pull request against your `DESIGN.md` and posts cited findings with ready-made fixes. [How it works with the plugin](https://www.crocotaste.com).
 
 ## Examples
 
