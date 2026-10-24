@@ -95,6 +95,15 @@ test("parseTokens does not loop on a cycle", () => {
   assert.equal(light.get("a"), "var(--b)");
 });
 
+test("parseTokens resolves a nested var() fallback", () => {
+  const { light } = parseTokens(
+    ":root { --b: #123456; --a: var(--missing, var(--b)); --c: var(--nope, #fff); --d: var(--nope, var(--gone)); }"
+  );
+  assert.equal(light.get("a"), "#123456");
+  assert.equal(light.get("c"), "#fff");
+  assert.equal(light.get("d"), "var(--nope, var(--gone))");
+});
+
 test("parseColor handles hex, rgb, rgba, hsl and rejects names", () => {
   assert.deepEqual(parseColor("#fff"), { r: 255, g: 255, b: 255, a: 1 });
   assert.deepEqual(parseColor("#2456e6"), { r: 36, g: 86, b: 230, a: 1 });

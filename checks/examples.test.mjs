@@ -99,9 +99,10 @@ for (const slug of examples()) {
       generated,
       Object.keys(componentMap.components)
     );
+    // Parsed maps have no prototype; a structured clone compares plain data.
     assert.deepEqual(
-      mergeFrontmatter(existing, generated, ownedKeys),
-      existing
+      structuredClone(mergeFrontmatter(existing, generated, ownedKeys)),
+      structuredClone(existing)
     );
   });
 

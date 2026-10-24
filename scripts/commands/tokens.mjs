@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import {
   parseTokens,
@@ -8,29 +8,19 @@ import {
 } from "../lib/css-tokens.mjs";
 import {
   BODY_SKELETON,
-  SECTIONS,
   frontmatterFromTokens,
+  keptCount,
   mergeFrontmatter,
   ownedKeysOf,
   readComponents,
   readTitle,
   splitDesignMd,
 } from "../lib/design-md.mjs";
+import { FileGuardError, readInput, writeFileSafely } from "../lib/files.mjs";
 import { emitYaml, parseYaml, YamlSubsetError } from "../lib/yaml.mjs";
 
-const USAGE = "crocotaste tokens <BRAND.html> <DESIGN.md> --write | --print\n";
-
-function keptCount(existing, generated) {
-  if (!existing) return 0;
-  let kept = 0;
-  for (const [key, value] of Object.entries(existing)) {
-    if (!SECTIONS.includes(key)) kept += 1;
-    else if (value && typeof value === "object") {
-      kept += Object.keys(value).filter((k) => !(k in generated[key])).length;
-    }
-  }
-  return kept;
-}
+const USAGE =
+  "node scripts/crocotaste.mjs tokens <BRAND.html> <DESIGN.md> --write | --print\n";
 
 function run(args, io) {
   const flags = args.filter((arg) => arg.startsWith("--"));
@@ -47,7 +37,14 @@ function run(args, io) {
     io.stderr.write(`Cannot find ${files[0]}\n`);
     return 1;
   }
-  const html = readFileSync(brandPath, "utf8");
+  let html;
+  try {
+    html = readInput(brandPath, files[0]);
+  } catch (error) {
+    if (!(error instanceof FileGuardError)) throw error;
+    io.stderr.write(`${error.message}\n`);
+    return 2;
+  }
 
   let tokens;
   let componentMap;
@@ -67,6 +64,15 @@ function run(args, io) {
     return 1;
   }
   for (const warning of componentMap.warnings) io.stderr.write(`${warning}\n`);
+  const unresolved = new Set();
+  for (const map of [tokens.light, tokens.dark]) {
+    for (const [name, value] of map) {
+      if (value.includes("var(")) unresolved.add(name);
+    }
+  }
+  for (const name of unresolved) {
+    io.stderr.write(`warning: ${name} does not resolve\n`);
+  }
 
   const hadFile = existsSync(designPath);
   const split = hadFile
@@ -77,11 +83,18 @@ function run(args, io) {
         bom: "",
         eol: "\n",
         misplaced: false,
+        rules: false,
       };
   const { frontmatter, body, bom, eol } = split;
   if (split.misplaced) {
     io.stderr.write(
       `${files[1]} has a --- block that is not at the top of the file. Move it to the top or remove it, then run tokens again.\n`
+    );
+    return 1;
+  }
+  if (split.rules) {
+    io.stderr.write(
+      `${files[1]} has no frontmatter block. Add one at the top (tokens --write creates it on a new file); the horizontal rules in the body are left alone.\n`
     );
     return 1;
   }
@@ -113,10 +126,16 @@ function run(args, io) {
     return 0;
   }
   mkdirSync(dirname(designPath), { recursive: true });
-  writeFileSync(designPath, `${bom}${text}${body}`);
+  try {
+    writeFileSafely(designPath, `${bom}${text}${body}`, files[1]);
+  } catch (error) {
+    if (!(error instanceof FileGuardError)) throw error;
+    io.stderr.write(`${error.message}\n`);
+    return 2;
+  }
   const count = (section) => Object.keys(generated[section]).length;
   io.stdout.write(
-    `wrote ${files[1]} (${count("colors")} colors, ${count("spacing")} spacing, ${count("rounded")} rounded, ${count("typography")} typography, ${count("components")} components; kept ${keptCount(existing, generated)} keys)\n`
+    `wrote ${files[1]} (${count("colors")} colors, ${count("spacing")} spacing, ${count("rounded")} rounded, ${count("typography")} typography, ${count("components")} components; kept ${keptCount(existing, merged, generated)} keys)\n`
   );
   return 0;
 }

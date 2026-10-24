@@ -1,4 +1,3 @@
-const VAR_REFERENCE = /var\(\s*--([\w-]+)\s*(?:,[^)]*)?\)/g;
 const DARK_SELECTOR = /\[data-theme\s*=\s*(["'])dark\1\]/;
 
 const REQUIRED_TOKENS = [
@@ -128,31 +127,87 @@ function declarationsOf(body) {
   return declarations;
 }
 
+// A split instead of one regex over the whole declaration, so a long value
+// cannot make the match backtrack.
 function collect(set, body) {
   for (const declaration of declarationsOf(body)) {
-    const match = declaration.match(/^\s*--([\w-]+)\s*:\s*([\s\S]*?)\s*$/);
-    if (match) set.set(match[1], match[2]);
+    const colon = declaration.indexOf(":");
+    if (colon === -1) continue;
+    const name = declaration.slice(0, colon).trim();
+    if (!/^--[\w-]+$/.test(name)) continue;
+    set.set(name.slice(2), declaration.slice(colon + 1).trim());
   }
+}
+
+// The closing parenthesis of the call opened at `open`, counting nested ones.
+function closingParen(text, open) {
+  let depth = 0;
+  for (let i = open; i < text.length; i += 1) {
+    if (text[i] === "(") depth += 1;
+    else if (text[i] === ")") {
+      depth -= 1;
+      if (depth === 0) return i;
+    }
+  }
+  return -1;
+}
+
+// The first top-level comma splits a var() into its name and its fallback.
+function splitVar(inner) {
+  let depth = 0;
+  for (let i = 0; i < inner.length; i += 1) {
+    if (inner[i] === "(") depth += 1;
+    else if (inner[i] === ")") depth -= 1;
+    else if (inner[i] === "," && depth === 0) {
+      return [inner.slice(0, i).trim(), inner.slice(i + 1).trim()];
+    }
+  }
+  return [inner.trim(), undefined];
+}
+
+// Fallbacks may hold another var(), so substitution recurses into them.
+function substitute(text, lookup, seen) {
+  let out = "";
+  let from = 0;
+  let resolved = true;
+  for (let at = text.indexOf("var(", from); at !== -1;) {
+    const open = at + 3;
+    const close = closingParen(text, open);
+    if (close === -1) return { value: text, resolved: false };
+    const [reference, fallback] = splitVar(text.slice(open + 1, close));
+    let value = /^--[\w-]+$/.test(reference)
+      ? lookup(reference.slice(2), seen)
+      : undefined;
+    if (value === undefined && fallback !== undefined) {
+      const inner = substitute(fallback, lookup, seen);
+      if (inner.resolved) value = inner.value;
+    }
+    if (value === undefined) {
+      resolved = false;
+      value = text.slice(at, close + 1);
+    }
+    out += text.slice(from, at) + value;
+    from = close + 1;
+    at = text.indexOf("var(", from);
+  }
+  return { value: out + text.slice(from), resolved };
 }
 
 function resolveSet(set, fallback) {
   const lookup = (name, seen) => {
     const raw = set.get(name) ?? fallback?.get(name);
     if (raw === undefined || seen.has(name)) return undefined;
-    const next = new Set(seen).add(name);
-    let resolved = true;
-    const value = raw.replace(VAR_REFERENCE, (whole, reference) => {
-      const target = lookup(reference, next);
-      if (target === undefined || target.includes("var(")) {
-        resolved = false;
-        return whole;
-      }
-      return target;
-    });
-    return resolved ? value : raw;
+    const { value, resolved } = substitute(
+      raw,
+      lookup,
+      new Set(seen).add(name)
+    );
+    return resolved && !value.includes("var(") ? value : undefined;
   };
   const result = new Map();
-  for (const name of set.keys()) result.set(name, lookup(name, new Set()));
+  for (const name of set.keys()) {
+    result.set(name, lookup(name, new Set()) ?? set.get(name));
+  }
   return result;
 }
 

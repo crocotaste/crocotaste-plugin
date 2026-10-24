@@ -1,10 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { request } from "node:http";
+import { spawn } from "node:child_process";
 import {
+  chmodSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
+  readFileSync,
   realpathSync,
   statSync,
   symlinkSync,
@@ -313,4 +316,117 @@ test("closes after the idle timeout", async () => {
     get(new URL("/__crocotaste/ping", preview.url).href, { method: "HEAD" })
   );
   await preview.close();
+});
+
+test("a file target serves only that file", async () => {
+  const { site } = setup();
+  writeFileSync(join(site, "BRAND.html"), "<body>brand</body>");
+  writeFileSync(join(site, "creds.json"), '{"token":"x"}');
+  const preview = await startPreview({
+    root: site,
+    openPath: "BRAND.html",
+    io: quiet,
+  });
+  try {
+    assert.match(preview.url, /\/BRAND\.html$/);
+    const page = await get(preview.url);
+    assert.equal(page.status, 200);
+    assert.equal(
+      page.headers.get("content-security-policy").split(";")[0],
+      "default-src 'self'"
+    );
+    for (const path of ["/creds.json", "/index.html", "/"]) {
+      const { status, body } = await rawGet(preview.port, path);
+      assert.equal(status, 404, path);
+      assert.ok(!body.includes("token"), path);
+    }
+    assert.equal(
+      (await rawGet(preview.port, "/__crocotaste/reload.js")).status,
+      200
+    );
+  } finally {
+    await preview.close();
+  }
+});
+
+test("a directory target serves html files only", async () => {
+  const { site } = setup();
+  writeFileSync(join(site, "notes.txt"), "private notes");
+  writeFileSync(join(site, "home.html"), "<body>home</body>");
+  mkdirSync(join(site, "deep"));
+  writeFileSync(join(site, "deep", "page.html"), "<body>deep</body>");
+  symlinkSync("notes.txt", join(site, "alias.html"));
+  const preview = await startPreview({ root: site, io: quiet });
+  try {
+    const home = await get(new URL("/home.html", preview.url).href);
+    assert.equal(home.status, 200);
+    assert.ok(
+      home.headers
+        .get("content-security-policy")
+        .includes("font-src 'self' data: https://fonts.gstatic.com")
+    );
+    for (const path of ["/notes.txt", "/deep/page.html", "/alias.html"]) {
+      const { status, body } = await rawGet(preview.port, path);
+      assert.equal(status, 404, path);
+      assert.ok(!body.includes("private"), path);
+    }
+  } finally {
+    await preview.close();
+  }
+});
+
+test(
+  "a state file that is not 0600 is refused",
+  { skip: process.platform === "win32" },
+  async () => {
+    const { site } = setup();
+    const decoy = setup();
+    const other = await startPreview({ root: decoy.site, io: quiet });
+    try {
+      const root = realpathSync.native(site);
+      const state = JSON.parse(
+        readFileSync(statePath(realpathSync.native(decoy.site)), "utf8")
+      );
+      const file = statePath(root);
+      mkdirSync(join(file, ".."), { recursive: true });
+      writeFileSync(file, JSON.stringify({ ...state, root }));
+      chmodSync(file, 0o644);
+      let out = "";
+      const io = {
+        stdout: { write: (text) => (out += text) },
+        stderr: { write() {} },
+        cwd: site,
+      };
+      assert.equal(await run(["serve", site, "--idle-minutes", "0.01"], io), 0);
+      assert.notEqual(JSON.parse(out.trim()).port, other.port);
+      // The same file at 0600 is trusted, so the check is the mode alone.
+      writeFileSync(file, JSON.stringify({ ...state, root }));
+      chmodSync(file, 0o600);
+      out = "";
+      assert.equal(await run(["serve", site], io), 0);
+      assert.equal(JSON.parse(out.trim()).port, other.port);
+    } finally {
+      await other.close();
+    }
+  }
+);
+
+test("closes when the parent process is gone", async () => {
+  const { site } = setup();
+  const parent = spawn(process.execPath, ["-e", "setTimeout(() => {}, 60000)"]);
+  await new Promise((resolve) => parent.once("spawn", resolve));
+  const preview = await startPreview({
+    root: site,
+    parentPid: parent.pid,
+    parentPollMs: 50,
+    io: quiet,
+  });
+  parent.kill();
+  await new Promise((resolve) => parent.once("exit", resolve));
+  const result = await Promise.race([
+    preview.closed.then(() => "closed"),
+    new Promise((resolve) => setTimeout(() => resolve("open"), 2000)),
+  ]);
+  if (result === "open") await preview.close();
+  assert.equal(result, "closed");
 });

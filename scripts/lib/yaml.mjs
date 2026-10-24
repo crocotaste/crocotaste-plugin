@@ -9,7 +9,17 @@ const RESERVED = /^(null|~|yes|no|on|off|y|n|true|false)$/i;
 const REFERENCE = /^\{[\w.-]+\}$/;
 const PLAIN_KEY = /^[A-Za-z_][\w-]*$/;
 // Anything YAML would read as something other than a plain string.
-const NEEDS_QUOTES = /[#:{},[\]&*|>!%@`"'\\]|^\s|\s$|^-\s|^$/;
+const NEEDS_QUOTES = /[#:{},[\]&*|>!%@`"'\\\n\r\t]|^\s|\s$|^-\s|^$/;
+// Keys that would reach Object.prototype through a plain assignment.
+const FORBIDDEN_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+const ESCAPES = { n: "\n", r: "\r", t: "\t", '"': '"', "\\": "\\" };
+const ESCAPED = {
+  "\n": "\\n",
+  "\r": "\\r",
+  "\t": "\\t",
+  '"': '\\"',
+  "\\": "\\\\",
+};
 
 class YamlSubsetError extends Error {
   constructor(message, line) {
@@ -26,7 +36,7 @@ function unquote(text, line) {
   }
   const inner = text.slice(1, -1);
   return quote === '"'
-    ? inner.replace(/\\(["\\])/g, "$1")
+    ? inner.replace(/\\(["\\nrt])/g, (_, char) => ESCAPES[char])
     : inner.replace(/''/g, "'");
 }
 
@@ -90,7 +100,7 @@ function splitKey(content, line) {
 }
 
 function parseYaml(text) {
-  const root = {};
+  const root = Object.create(null);
   const stack = [{ indent: -1, map: root }];
   const lines = text.split(/\r?\n/);
   for (let i = 0; i < lines.length; i += 1) {
@@ -105,10 +115,13 @@ function parseYaml(text) {
     while (stack.length > 1 && indent <= stack.at(-1).indent) stack.pop();
     const split = splitKey(content, line);
     const key = split.key;
+    if (FORBIDDEN_KEYS.has(key)) {
+      throw new YamlSubsetError(`The key "${key}" is not allowed`, line);
+    }
     const rest = stripComment(split.rest, line);
     const parent = stack.at(-1).map;
     if (rest === "") {
-      const child = {};
+      const child = Object.create(null);
       parent[key] = child;
       stack.push({ indent, map: child });
     } else {
@@ -137,7 +150,10 @@ function emitScalar(value, forceQuote = false) {
     NEEDS_QUOTES.test(value) ||
     NUMBER_LIKE.test(value) ||
     RESERVED.test(value);
-  return quote ? `"${value.replace(/(["\\])/g, "\\$1")}"` : value;
+  // Non-ASCII stays as written; only what would break the line is escaped.
+  return quote
+    ? `"${value.replace(/["\\\n\r\t]/g, (char) => ESCAPED[char])}"`
+    : value;
 }
 
 function emitMap(map, depth) {

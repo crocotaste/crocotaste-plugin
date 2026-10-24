@@ -6,6 +6,24 @@ import {
 
 const SECTIONS = ["colors", "spacing", "rounded", "typography", "components"];
 
+// Under these two sections the generator owns only the sub-keys it emits, so a
+// hand-added padding or font feature survives the next run.
+const OWNED_SUBKEYS = {
+  components: new Set([
+    "backgroundColor",
+    "textColor",
+    "borderColor",
+    "rounded",
+  ]),
+  typography: new Set([
+    "fontFamily",
+    "fontSize",
+    "fontWeight",
+    "lineHeight",
+    "letterSpacing",
+  ]),
+};
+
 const HEADINGS = [
   "Overview",
   "Colors",
@@ -25,6 +43,8 @@ const BODY_SKELETON = HEADINGS.map(
 
 const FRONTMATTER = /^---\r?\n([\s\S]*?\r?\n)?---[ \t]*(?:\r?\n|$)/;
 const MISPLACED_BLOCK = /^---[ \t]*\r?\n[\s\S]*?^---[ \t]*$/m;
+const FRONTMATTER_KEY =
+  /^(?:version|name|description|colors|spacing|rounded|typography|components)[ \t]*:/m;
 const BOM = "\uFEFF";
 
 function isObject(value) {
@@ -85,7 +105,7 @@ function typographyOf(light) {
 // Section content stops at the first closing tag: the components chapter holds
 // no nested sections.
 function componentsSection(html) {
-  const open = html.search(/<section\b[^>]*\bid=["']components["']/);
+  const open = html.search(/<section\b[^<>]*\bid=["']components["']/);
   if (open === -1) return "";
   const close = html.indexOf("</section>", open);
   return html.slice(open, close === -1 ? html.length : close);
@@ -101,7 +121,7 @@ function readComponents(html) {
   const components = {};
   const warnings = [];
   const tags = componentsSection(html).match(
-    /<[a-z][^>]*\bdata-component=[^>]*>/gi
+    /<[a-z][^<>]*\bdata-component=[^<>]*>/gi
   );
   for (const tag of tags ?? []) {
     const id = attribute(tag, "data-component");
@@ -172,12 +192,17 @@ function splitDesignMd(text) {
   const trimmed = rest.replace(/^(?:[ \t]*\r?\n)+/, "");
   const match = trimmed.match(FRONTMATTER);
   if (!match) {
+    // Frontmatter keys between two --- lines mean a misplaced block; anything
+    // else is a pair of horizontal rules in the body.
+    const block = rest.match(MISPLACED_BLOCK)?.[0];
+    const misplaced = block !== undefined && FRONTMATTER_KEY.test(block);
     return {
       frontmatter: null,
       body: rest,
       bom,
       eol,
-      misplaced: MISPLACED_BLOCK.test(rest),
+      misplaced,
+      rules: block !== undefined && !misplaced,
     };
   }
   return {
@@ -186,7 +211,38 @@ function splitDesignMd(text) {
     bom,
     eol,
     misplaced: false,
+    rules: false,
   };
+}
+
+function mergeEntry(section, existingEntry, generatedEntry) {
+  const owned = OWNED_SUBKEYS[section];
+  const entry = { ...(generatedEntry ?? {}) };
+  for (const [key, value] of Object.entries(
+    isObject(existingEntry) ? existingEntry : {}
+  )) {
+    if (!owned.has(key) && !(key in entry)) entry[key] = value;
+  }
+  return entry;
+}
+
+function mergeSection(section, existingSection, generatedSection, owned) {
+  const existingMap = isObject(existingSection) ? existingSection : {};
+  const merged = {};
+  for (const [key, value] of Object.entries(existingMap)) {
+    if (!owned.has(key)) merged[key] = value;
+    else if (section in OWNED_SUBKEYS && !(key in generatedSection)) {
+      const rest = mergeEntry(section, value, undefined);
+      if (Object.keys(rest).length > 0) merged[key] = rest;
+    }
+  }
+  for (const [key, value] of Object.entries(generatedSection)) {
+    merged[key] =
+      section in OWNED_SUBKEYS && owned.has(key)
+        ? mergeEntry(section, existingMap[key], value)
+        : value;
+  }
+  return merged;
 }
 
 function mergeFrontmatter(existing, generated, ownedKeys) {
@@ -196,20 +252,44 @@ function mergeFrontmatter(existing, generated, ownedKeys) {
     merged.name = generated.name;
   }
   for (const section of SECTIONS) {
-    const kept = Object.fromEntries(
-      Object.entries(
-        isObject(existing?.[section]) ? existing[section] : {}
-      ).filter(([key]) => !ownedKeys[section].has(key))
+    merged[section] = mergeSection(
+      section,
+      existing?.[section],
+      generated[section],
+      ownedKeys[section]
     );
-    merged[section] = { ...kept, ...generated[section] };
   }
   return merged;
+}
+
+// What the merge kept that this run did not generate: top-level keys, section
+// keys and the hand-added sub-keys under owned components and type styles.
+function keptCount(existing, merged, generated) {
+  if (!existing) return 0;
+  let kept = 0;
+  for (const key of Object.keys(existing)) {
+    if (!SECTIONS.includes(key)) kept += 1;
+  }
+  for (const section of SECTIONS) {
+    if (!isObject(existing[section])) continue;
+    for (const [key, value] of Object.entries(merged[section])) {
+      if (!(key in existing[section])) continue;
+      if (!(key in generated[section])) kept += 1;
+      else if (section in OWNED_SUBKEYS && isObject(value)) {
+        kept += Object.keys(value).filter(
+          (sub) => !(sub in generated[section][key])
+        ).length;
+      }
+    }
+  }
+  return kept;
 }
 
 export {
   BODY_SKELETON,
   SECTIONS,
   frontmatterFromTokens,
+  keptCount,
   mergeFrontmatter,
   ownedKeysOf,
   readComponents,

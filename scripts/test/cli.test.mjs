@@ -36,3 +36,17 @@ test("an unknown command returns 2 and prints help", async () => {
   assert.ok(err().includes("nope"));
   assert.ok(out().includes("check"));
 });
+
+test("help names the real entry point and what check does", async () => {
+  const { io, out } = capture();
+  assert.equal(await run(["help"], io), 0);
+  assert.ok(
+    out().startsWith("Usage: node scripts/crocotaste.mjs <command> [options]")
+  );
+  assert.ok(
+    out().includes(
+      "Check BRAND.html for broken rules, missing tokens and components, and low contrast"
+    )
+  );
+  assert.ok(!/^ {2}crocotaste /m.test(out()));
+});

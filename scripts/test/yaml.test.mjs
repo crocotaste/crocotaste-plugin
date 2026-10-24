@@ -1,6 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { parseYaml, emitYaml, YamlSubsetError } from "../lib/yaml.mjs";
+import {
+  parseYaml as parseRaw,
+  emitYaml,
+  YamlSubsetError,
+} from "../lib/yaml.mjs";
+
+// Parsed maps have no prototype; a structured clone compares them as plain data.
+const parseYaml = (text) => structuredClone(parseRaw(text));
 
 const sample = {
   version: "alpha",
@@ -108,4 +115,35 @@ test("quotes words and numbers a standard reader would misread", () => {
   for (const w of words) assert.ok(text.includes(`"${w}"`), w);
   for (const k of Object.keys(keys)) assert.ok(text.includes(`"${k}":`), k);
   assert.deepEqual(parseYaml(text), sample);
+});
+
+test("quotes and escapes a newline, a carriage return and a tab", () => {
+  const sample = { a: "one\ntwo", b: "x\ry", c: "p\tq" };
+  const text = emitYaml(sample);
+  assert.ok(text.includes('a: "one\\ntwo"'), text);
+  assert.ok(text.includes('b: "x\\ry"'), text);
+  assert.ok(text.includes('c: "p\\tq"'), text);
+  assert.equal(text.split("\n").length, 4);
+  assert.deepEqual(parseYaml(text), sample);
+});
+
+test("leaves non-ASCII characters as written", () => {
+  const sample = { name: "Café Crème", note: "é: ü" };
+  const text = emitYaml(sample);
+  assert.ok(text.includes("name: Café Crème"), text);
+  assert.ok(text.includes('note: "é: ü"'), text);
+  assert.deepEqual(parseYaml(text), sample);
+});
+
+test("rejects a key that would reach the object prototype", () => {
+  for (const key of ["__proto__", "constructor", "prototype"]) {
+    assert.throws(
+      () => parseRaw(`colors:\n  ${key}:\n    polluted: yes\n`),
+      (error) =>
+        error instanceof YamlSubsetError &&
+        error.message.includes(`"${key}" is not allowed`)
+    );
+  }
+  assert.equal({}.polluted, undefined);
+  assert.equal(Object.getPrototypeOf(parseRaw("a: 1\n")), null);
 });

@@ -1,8 +1,9 @@
-import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { readBlock, TokenBlockError } from "../lib/css-tokens.mjs";
+import { FileGuardError, readInput, writeFileSafely } from "../lib/files.mjs";
 
-const USAGE = 'crocotaste fonts <BRAND.html> "<Family:wght@400;600>" ...\n';
+const USAGE =
+  'node scripts/crocotaste.mjs fonts <BRAND.html> "<Family:wght@400;600>" ...\n';
 
 const CSS2 = "https://fonts.googleapis.com/css2";
 const TIMEOUT_MS = 15_000;
@@ -10,13 +11,53 @@ const TIMEOUT_MS = 15_000;
 // per-subset comments this command reads.
 const USER_AGENT =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36";
-const FAMILY_ARG = /^[A-Za-z0-9 +]+(:[a-z]+@[0-9;.]+)?$/;
+// A family name, then Google's axis list (`ital,wght@0,400..700;1,400`): only
+// letters, digits and the separators the css2 API reads ever reach the URL.
+const FAMILY_ARG = /^[A-Za-z0-9 ]+(?::[A-Za-z]+(?:,[A-Za-z]+)*@[0-9.,;]+)?$/;
+const FONT_HOST = "https://fonts.gstatic.com/";
+const MAX_CSS_BYTES = 256 * 1024;
+const MAX_FONT_BYTES = 2 * 1024 * 1024;
 const FACE = /(?:\/\*\s*([\w-]+)\s*\*\/\s*)?(@font-face\s*\{[^}]*\})/g;
 const SRC_URL =
   /url\(\s*(["']?)([^)"']+)\1\s*\)\s*format\(\s*(["'])woff2\3\s*\)/;
 
+// A refusal names its reason; a plain failure only says the face is missing.
+class FontRefusal extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "FontRefusal";
+  }
+}
+
 function familyName(arg) {
-  return arg.split(":")[0].replace(/\+/g, " ");
+  return arg.split(":")[0];
+}
+
+// Bytes are counted as they arrive, so a server cannot make us buffer more
+// than the cap whatever its Content-Length says.
+async function readCapped(response, cap, url) {
+  const chunks = [];
+  let total = 0;
+  const reader = response.body?.getReader();
+  if (reader) {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.length;
+      if (total > cap) {
+        await reader.cancel().catch(() => {});
+        throw new FontRefusal(`refusing ${url}: over ${cap / 1024} KB`);
+      }
+      chunks.push(value);
+    }
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.length;
+  }
+  return bytes;
 }
 
 // Subsets are the comments Google puts before each face; answer without any
@@ -26,6 +67,11 @@ async function fontFaceCss(css2, download, keepSubsets = ["latin"]) {
     subset: m[1],
     rule: m[2],
   }));
+  // A face lands inside a <style> in the brand book; one that could close it
+  // means the whole response is not to be trusted.
+  if (faces.some((face) => face.rule.includes("<"))) {
+    throw new FontRefusal("refusing a font face that contains <");
+  }
   const labelled = faces.some((face) => face.subset);
   const kept = faces.filter(
     (face) => !labelled || keepSubsets.includes(face.subset)
@@ -34,6 +80,11 @@ async function fontFaceCss(css2, download, keepSubsets = ["latin"]) {
   for (const { subset, rule } of kept) {
     const match = rule.match(SRC_URL);
     if (!match) continue;
+    if (!match[2].startsWith(FONT_HOST)) {
+      throw new FontRefusal(
+        `refusing a font URL outside ${FONT_HOST}: ${match[2]}`
+      );
+    }
     const bytes = await download(match[2]);
     const data = Buffer.from(bytes).toString("base64");
     const inlined = rule.replace(
@@ -46,22 +97,23 @@ async function fontFaceCss(css2, download, keepSubsets = ["latin"]) {
 }
 
 // The body is read before the timer is cleared, so a server that stalls
-// mid-body is cut off too.
-async function get(io, url, headers, as) {
+// mid-body is cut off too. A redirect is an error: only the two Google hosts
+// are ever asked.
+async function get(io, url, headers, as, cap) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
     const response = await io.fetch(url, {
       headers,
+      redirect: "error",
       signal: controller.signal,
     });
     if (response.status !== 200) {
       await response.body?.cancel().catch(() => {});
       throw new Error(`HTTP ${response.status}`);
     }
-    return as === "text"
-      ? await response.text()
-      : new Uint8Array(await response.arrayBuffer());
+    const bytes = await readCapped(response, cap, url);
+    return as === "text" ? new TextDecoder().decode(bytes) : bytes;
   } finally {
     clearTimeout(timer);
   }
@@ -82,9 +134,13 @@ async function run(args, io) {
   let html;
   let block;
   try {
-    html = readFileSync(path, "utf8");
+    html = readInput(path, file);
     block = readBlock(html, "fonts");
   } catch (error) {
+    if (error instanceof FileGuardError) {
+      io.stderr.write(`${error.message}\n`);
+      return 2;
+    }
     io.stderr.write(
       error instanceof TokenBlockError
         ? `${file}: ${error.message}\n`
@@ -95,7 +151,7 @@ async function run(args, io) {
 
   let bytes = 0;
   const download = async (url) => {
-    const data = await get(io, url, { Accept: "*/*" }, "bytes");
+    const data = await get(io, url, { Accept: "*/*" }, "bytes", MAX_FONT_BYTES);
     bytes += data.length;
     return data;
   };
@@ -108,13 +164,17 @@ async function run(args, io) {
         io,
         url,
         { "User-Agent": USER_AGENT, Accept: "text/css,*/*;q=0.1" },
-        "text"
+        "text",
+        MAX_CSS_BYTES
       );
       const css = await fontFaceCss(text, download);
       if (!css.includes("@font-face")) throw new Error("no faces");
       parts.push(css);
-    } catch {
+    } catch (error) {
       failed = true;
+      if (error instanceof FontRefusal) {
+        io.stderr.write(`fonts: ${error.message}\n`);
+      }
       io.stderr.write(
         `fonts: could not fetch ${familyName(arg)}; keep the system fallback and say so in chapter 04\n`
       );
@@ -125,11 +185,16 @@ async function run(args, io) {
 
   const css = parts.join("\n\n");
   try {
-    writeFileSync(
+    writeFileSafely(
       path,
-      html.slice(0, block.start) + "\n" + css + "\n" + html.slice(block.end)
+      html.slice(0, block.start) + "\n" + css + "\n" + html.slice(block.end),
+      file
     );
-  } catch {
+  } catch (error) {
+    if (error instanceof FileGuardError) {
+      io.stderr.write(`${error.message}\n`);
+      return 2;
+    }
     io.stderr.write(`Cannot write ${file}\n`);
     return 1;
   }
@@ -138,4 +203,4 @@ async function run(args, io) {
   return 0;
 }
 
-export { fontFaceCss, run };
+export { FAMILY_ARG, fontFaceCss, run };

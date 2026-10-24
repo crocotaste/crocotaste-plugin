@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   mkdtempSync,
   readFileSync,
+  symlinkSync,
   writeFileSync,
   copyFileSync,
 } from "node:fs";
@@ -123,7 +124,11 @@ test("fails with 1 on a DESIGN.md the yaml subset cannot read", async () => {
 test("exits 2 on bad usage", async () => {
   const c = capture(setup());
   assert.equal(await run(["tokens", "BRAND.html"], c.io), 2);
-  assert.ok(c.err().includes("crocotaste tokens <BRAND.html> <DESIGN.md>"));
+  assert.ok(
+    c
+      .err()
+      .includes("node scripts/crocotaste.mjs tokens <BRAND.html> <DESIGN.md>")
+  );
 });
 
 test("keeps a byte-order mark, a comment's value and CRLF, with one frontmatter", async () => {
@@ -159,4 +164,66 @@ test("refuses a DESIGN.md whose --- block is not at the top", async () => {
   );
   assert.ok(c.err().includes("not at the top"));
   assert.equal(readFileSync(path, "utf8"), original);
+});
+
+test("tokens warns on a token that does not resolve", async () => {
+  const dir = setup();
+  const brand = join(dir, "BRAND.html");
+  writeFileSync(
+    brand,
+    readFileSync(brand, "utf8").replace(
+      "--color-accent: #a8670b;",
+      "--color-accent: #a8670b; --color-extra: var(--nope);"
+    )
+  );
+  const c = capture(dir);
+  const code = await run(
+    ["tokens", "BRAND.html", "DESIGN.md", "--print"],
+    c.io
+  );
+  assert.equal(code, 0, c.err());
+  assert.match(c.err(), /^warning: color-extra does not resolve$/m);
+  assert.equal(c.err().match(/does not resolve/g).length, 1);
+});
+
+test("a body with two horizontal rules and no frontmatter gets the right advice", async () => {
+  const dir = setup();
+  const path = join(dir, "DESIGN.md");
+  const original = "# Notes\n\n---\n\nSome text.\n\n---\n";
+  writeFileSync(path, original);
+  const c = capture(dir);
+  assert.equal(
+    await run(["tokens", "BRAND.html", "DESIGN.md", "--write"], c.io),
+    1
+  );
+  assert.equal(
+    c.err(),
+    "DESIGN.md has no frontmatter block. Add one at the top (tokens --write creates it on a new file); the horizontal rules in the body are left alone.\n"
+  );
+  assert.equal(readFileSync(path, "utf8"), original);
+});
+
+test("refuses to write DESIGN.md through a symlink and leaves its destination alone", async () => {
+  const dir = setup();
+  const target = join(dir, "elsewhere.md");
+  writeFileSync(target, "untouched\n");
+  symlinkSync(target, join(dir, "DESIGN.md"));
+  const c = capture(dir);
+  assert.equal(
+    await run(["tokens", "BRAND.html", "DESIGN.md", "--write"], c.io),
+    2
+  );
+  assert.match(c.err(), /refusing to write through a symlink: DESIGN\.md/);
+  assert.equal(readFileSync(target, "utf8"), "untouched\n");
+});
+
+test("refuses a brand book over 2 MB", async () => {
+  const dir = setup();
+  writeFileSync(join(dir, "big.html"), "x".repeat(2 * 1024 * 1024 + 1));
+  const c = capture(dir);
+  assert.equal(
+    await run(["tokens", "big.html", "DESIGN.md", "--print"], c.io),
+    2
+  );
+  assert.equal(c.err(), "file too large (max 2 MB): big.html\n");
 });

@@ -4,7 +4,7 @@ import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { run } from "../lib/cli.mjs";
-import { fontFaceCss } from "../commands/fonts.mjs";
+import { FAMILY_ARG, fontFaceCss } from "../commands/fonts.mjs";
 import { readBlock } from "../lib/css-tokens.mjs";
 
 const css2 = readFileSync(
@@ -157,4 +157,68 @@ test("returns 1 for a missing book or missing fonts markers", async () => {
     await run(["fonts", "bare.html", "Inter"], io(dir, fakeFetch())),
     1
   );
+});
+
+test("a response with a font URL outside fonts.gstatic.com is refused", async () => {
+  const dir = setup();
+  const calls = [];
+  const sandbox = io(dir, async (url, init) => {
+    calls.push({ url: String(url), init });
+    return new Response(
+      css2.replaceAll("https://fonts.gstatic.com/", "https://evil.example/"),
+      { status: 200 }
+    );
+  });
+  assert.equal(await run(["fonts", "BRAND.html", "Inter"], sandbox), 2);
+  assert.match(
+    sandbox.err,
+    /refusing a font URL outside https:\/\/fonts\.gstatic\.com\//
+  );
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].init.redirect, "error");
+  assert.equal(readFileSync(join(dir, "BRAND.html"), "utf8"), brand);
+});
+
+test("a face with < in its text is refused", async () => {
+  const evil = css2.replace(
+    "font-display: swap;",
+    "font-display: swap; font-family: 'x</style><script>alert(1)</script>';"
+  );
+  await assert.rejects(
+    fontFaceCss(evil, async () => BYTES),
+    /refusing a font face that contains </
+  );
+});
+
+test("an over-cap body is refused", async () => {
+  const dir = setup();
+  const sandbox = io(dir, async (url) =>
+    String(url).includes("googleapis.com")
+      ? new Response(css2, { status: 200 })
+      : new Response(new Uint8Array(2 * 1024 * 1024 + 1), { status: 200 })
+  );
+  assert.equal(await run(["fonts", "BRAND.html", "Inter"], sandbox), 2);
+  assert.match(sandbox.err, /over 2048 KB/);
+  assert.equal(readFileSync(join(dir, "BRAND.html"), "utf8"), brand);
+  const big = io(
+    dir,
+    async () => new Response("a".repeat(256 * 1024 + 1), { status: 200 })
+  );
+  assert.equal(await run(["fonts", "BRAND.html", "Inter"], big), 2);
+  assert.match(big.err, /over 256 KB/);
+});
+
+test("FAMILY_ARG accepts Google's axis forms and rejects anything else", () => {
+  for (const arg of [
+    "Inter",
+    "IBM Plex Sans:wght@400;600",
+    "Inter:wght@400..700",
+    "Lora:ital,wght@0,400..700;1,400",
+    "Roboto Flex:opsz,wght@8..144,100..1000",
+  ]) {
+    assert.ok(FAMILY_ARG.test(arg), arg);
+  }
+  for (const arg of ["Inter&evil=1", "Inter+Sans", 'Inter"', "Inter:wght@4<"]) {
+    assert.ok(!FAMILY_ARG.test(arg), arg);
+  }
 });

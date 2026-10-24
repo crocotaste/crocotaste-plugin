@@ -5,6 +5,7 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -221,4 +222,73 @@ test("a data-content attribute is not the description", async () => {
     readFileSync(join(mockups, "index.html"), "utf8"),
     /<span>real<\/span>/
   );
+});
+
+test("refuses to write index.html through a symlink and leaves its destination alone", async () => {
+  const { dir, brandPath, mockups } = setup();
+  mkdirSync(mockups);
+  const target = join(dir, "elsewhere.html");
+  writeFileSync(target, "<!-- crocotaste:index -->untouched");
+  symlinkSync(target, join(mockups, "index.html"));
+  const result = await sync(dir, [brandPath, mockups]);
+  assert.equal(result.code, 2);
+  assert.match(
+    result.err,
+    /refusing to write through a symlink: .*index\.html/
+  );
+  assert.equal(
+    readFileSync(target, "utf8"),
+    "<!-- crocotaste:index -->untouched"
+  );
+});
+
+test("refuses a mockups directory that is a symlink", async () => {
+  const { dir, brandPath, mockups } = setup();
+  const real = join(dir, "real");
+  mkdirSync(real);
+  symlinkSync(real, mockups);
+  const result = await sync(dir, [brandPath, mockups]);
+  assert.equal(result.code, 2);
+  assert.match(result.err, /refusing to write through a symlink: /);
+  assert.equal(existsSync(join(real, "index.html")), false);
+});
+
+test("never overwrites an index.html that is not a mockups index", async () => {
+  const { dir, brandPath, mockups } = setup();
+  mkdirSync(mockups);
+  writeFileSync(join(mockups, "home.html"), screen("Home", "Start"));
+  const before = readFileSync(join(mockups, "home.html"), "utf8");
+  writeFileSync(join(mockups, "index.html"), "<h1>my own index</h1>");
+  const result = await sync(dir, [brandPath, mockups]);
+  assert.equal(result.code, 2);
+  assert.equal(
+    result.err,
+    `refusing to overwrite ${join(mockups, "index.html")}: not a mockups index\n`
+  );
+  assert.equal(
+    readFileSync(join(mockups, "index.html"), "utf8"),
+    "<h1>my own index</h1>"
+  );
+  assert.equal(readFileSync(join(mockups, "home.html"), "utf8"), before);
+});
+
+test("rewrites an index that carries the marker", async () => {
+  const { dir, brandPath, mockups } = setup();
+  await sync(dir, [brandPath, mockups]);
+  const index = readFileSync(join(mockups, "index.html"), "utf8");
+  assert.ok(index.includes("<!-- crocotaste:index -->"));
+  assert.equal((await sync(dir, [brandPath, mockups])).code, 0);
+});
+
+test("a symlinked screen is named as skipped and its destination is untouched", async () => {
+  const { dir, brandPath, mockups } = setup();
+  mkdirSync(mockups);
+  const target = join(dir, "outside.html");
+  const original = screen("Outside", "Not here");
+  writeFileSync(target, original);
+  symlinkSync(target, join(mockups, "linked.html"));
+  const result = await sync(dir, [brandPath, mockups]);
+  assert.equal(result.code, 0);
+  assert.ok(result.err.includes("skipped linked.html: symlink"));
+  assert.equal(readFileSync(target, "utf8"), original);
 });

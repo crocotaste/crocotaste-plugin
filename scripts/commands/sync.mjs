@@ -1,8 +1,14 @@
-import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { readBlock, TokenBlockError } from "../lib/css-tokens.mjs";
+import {
+  FileGuardError,
+  readInput,
+  refuseSymlink,
+  writeFileSafely,
+} from "../lib/files.mjs";
 
-const USAGE = "crocotaste sync <BRAND.html> <mockups dir>\n";
+const USAGE = "node scripts/crocotaste.mjs sync <BRAND.html> <mockups dir>\n";
 
 // Next to the plugin, never the user's cwd, so the index is the same wherever
 // the command runs.
@@ -10,6 +16,10 @@ const INDEX_TEMPLATE = new URL(
   "../../skills/mockups/templates/index.html",
   import.meta.url
 );
+
+// Only an index this command wrote carries the marker, so a hand-written
+// index.html in the same folder is never replaced.
+const INDEX_MARKER = "<!-- crocotaste:index -->";
 
 const ENTITIES = { amp: "&", lt: "<", gt: ">", quot: '"', "#39": "'" };
 
@@ -73,10 +83,20 @@ function run(args, io) {
     io.stderr.write(`Usage: ${USAGE}`);
     return 2;
   }
+  try {
+    return syncAll(args, io);
+  } catch (error) {
+    if (!(error instanceof FileGuardError)) throw error;
+    io.stderr.write(`${error.message}\n`);
+    return 2;
+  }
+}
+
+function syncAll(args, io) {
   const brandPath = resolve(io.cwd, args[0]);
   let blocks;
   try {
-    const brand = readFileSync(brandPath, "utf8");
+    const brand = readInput(brandPath, args[0]);
     blocks = { tokens: readBlock(brand, "tokens").css, fonts: "" };
     // A brand book without fonts markers simply has no fonts to copy.
     try {
@@ -85,6 +105,7 @@ function run(args, io) {
       if (!(error instanceof TokenBlockError)) throw error;
     }
   } catch (error) {
+    if (error instanceof FileGuardError) throw error;
     if (error instanceof TokenBlockError) {
       io.stderr.write(`${args[0]}: ${error.message}\n`);
     } else {
@@ -94,21 +115,39 @@ function run(args, io) {
   }
 
   const dir = resolve(io.cwd, args[1]);
+  refuseSymlink(dir, args[1]);
   mkdirSync(dir, { recursive: true });
-  const files = readdirSync(dir, { withFileTypes: true })
+  const indexPath = join(dir, "index.html");
+  const indexShown = join(args[1], "index.html");
+  refuseSymlink(indexPath, indexShown);
+  if (
+    existsSync(indexPath) &&
+    !readInput(indexPath, indexShown).includes(INDEX_MARKER)
+  ) {
+    io.stderr.write(
+      `refusing to overwrite ${indexShown}: not a mockups index\n`
+    );
+    return 2;
+  }
+
+  const entries = readdirSync(dir, { withFileTypes: true })
     .filter(
-      (entry) =>
-        entry.isFile() &&
-        entry.name.endsWith(".html") &&
-        entry.name !== "index.html"
+      (entry) => entry.name.endsWith(".html") && entry.name !== "index.html"
     )
-    .map((entry) => entry.name)
-    .sort();
-  const screens = [];
+    .sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+  // Every screen is read before any is written, so a refusal changes nothing.
+  const pending = [];
   let skipped = 0;
-  for (const file of files) {
+  for (const entry of entries) {
+    const file = entry.name;
+    if (entry.isSymbolicLink()) {
+      io.stderr.write(`skipped ${file}: symlink\n`);
+      skipped += 1;
+      continue;
+    }
+    if (!entry.isFile()) continue;
     const path = join(dir, file);
-    const html = readFileSync(path, "utf8");
+    const html = readInput(path, join(args[1], file));
     let next;
     try {
       next = fill(html, blocks);
@@ -118,7 +157,11 @@ function run(args, io) {
       skipped += 1;
       continue;
     }
-    if (next !== html) writeFileSync(path, next);
+    pending.push({ file, path, html, next });
+  }
+  const screens = [];
+  for (const { file, path, html, next } of pending) {
+    if (next !== html) writeFileSafely(path, next, join(args[1], file));
     screens.push(describe(next, file));
   }
 
@@ -126,7 +169,7 @@ function run(args, io) {
     "<!-- screens -->",
     () => cardsOf(screens)
   );
-  writeFileSync(join(dir, "index.html"), index);
+  writeFileSafely(indexPath, index, indexShown);
   io.stdout.write(
     `synced ${screens.length} ${screens.length === 1 ? "screen" : "screens"}, skipped ${skipped}, index rebuilt\n`
   );

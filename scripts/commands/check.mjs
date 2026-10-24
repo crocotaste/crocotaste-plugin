@@ -10,9 +10,10 @@ import {
   REQUIRED_TOKENS,
   TokenBlockError,
 } from "../lib/css-tokens.mjs";
+import { FileGuardError, readInput } from "../lib/files.mjs";
 
 const USAGE =
-  "crocotaste check <BRAND.html> [--json]\n       crocotaste check --samples <file>\n";
+  "node scripts/crocotaste.mjs check <BRAND.html> [--json]\n       node scripts/crocotaste.mjs check --samples <file>\n";
 
 // The template's own copy, listed so a brand book that still carries it is
 // caught. Next to the plugin, never the user's cwd.
@@ -81,7 +82,7 @@ function ratioText(value) {
 function chapterRules(html) {
   const problems = [];
   const found = [];
-  for (const tag of html.match(/<section\b[^>]*>/gi) ?? []) {
+  for (const tag of html.match(/<section\b[^<>]*>/gi) ?? []) {
     if (/\bdata-chapter\b/i.test(tag)) found.push(attribute(tag, "id"));
   }
   // Order is judged among the chapters present, so one gap is one problem.
@@ -95,11 +96,13 @@ function chapterRules(html) {
       );
     }
   });
-  const nav = html.match(/<nav\b[^>]*\bdata-sidebar\b[^>]*>([\s\S]*?)<\/nav>/i);
+  const nav = html.match(
+    /<nav\b[^<>]*\bdata-sidebar\b[^<>]*>([\s\S]*?)<\/nav>/i
+  );
   if (!nav) {
     problems.push("sidebar: missing <nav data-sidebar>");
   } else {
-    const links = (nav[1].match(/<a\b[^>]*>/gi) ?? []).map((a) =>
+    const links = (nav[1].match(/<a\b[^<>]*>/gi) ?? []).map((a) =>
       attribute(a, "href")
     );
     for (const id of CHAPTERS) {
@@ -168,7 +171,7 @@ function flatten(color, base) {
 function elementContent(html, id) {
   const open = html.match(
     new RegExp(
-      `<([a-z][\\w-]*)\\b[^>]*(?<![\\w-])data-component=(["'])${id}\\2[^>]*>`,
+      `<([a-z][\\w-]*)\\b[^<>]*(?<![\\w-])data-component=(["'])${id}\\2[^<>]*>`,
       "i"
     )
   );
@@ -179,7 +182,7 @@ function contentFrom(html, open) {
   const name = open[1];
   const start = open.index + open[0].length;
   if (open[0].endsWith("/>")) return "";
-  const tags = new RegExp(`<(/?)${name}\\b[^>]*?(/?)>`, "gi");
+  const tags = new RegExp(`<(/?)${name}\\b[^<>]*?(/?)>`, "gi");
   tags.lastIndex = start;
   let depth = 1;
   for (let m = tags.exec(html); m; m = tags.exec(html)) {
@@ -192,7 +195,7 @@ function contentFrom(html, open) {
 
 function componentRules(html) {
   const problems = [];
-  const tags = html.match(/<[a-z][^>]*\bdata-component=[^>]*>/gi) ?? [];
+  const tags = html.match(/<[a-z][^<>]*\bdata-component=[^<>]*>/gi) ?? [];
   const present = tags.map((tag) => attribute(tag, "data-component"));
   for (const id of REQUIRED_COMPONENTS) {
     if (!present.includes(id)) problems.push(`${id}: missing component`);
@@ -212,7 +215,7 @@ function componentRules(html) {
 
 function textOf(fragment) {
   return fragment
-    .replace(/<[^>]*>/g, " ")
+    .replace(/<[^<>]*>/g, " ")
     .replace(/&(amp|lt|gt|quot|#39|nbsp);/g, (_, name) => ENTITIES[name])
     .replace(/\s+/g, " ")
     .trim();
@@ -221,7 +224,8 @@ function textOf(fragment) {
 function samplesOf(html) {
   const samples = {};
   const duplicates = [];
-  const tags = /<([a-z][\w-]*)\b[^>]*(?<![\w-])data-fill=(["'])(.*?)\2[^>]*>/gi;
+  const tags =
+    /<([a-z][\w-]*)\b[^<>]*(?<![\w-])data-fill=(["'])(.*?)\2[^<>]*>/gi;
   for (const open of html.matchAll(tags)) {
     const id = open[3];
     if (id in samples) {
@@ -248,10 +252,10 @@ function documentRules(html) {
   if (!/<title>\s*\S[\s\S]*?<\/title>/i.test(html)) {
     problems.push("title: not set");
   }
-  if (!/<html\b[^>]*\blang=(["'])\s*\S+\s*\1/i.test(html)) {
+  if (!/<html\b[^<>]*\blang=(["'])\s*\S+\s*\1/i.test(html)) {
     problems.push("html: no lang attribute");
   }
-  if (!/<button\b[^>]*\bdata-theme-toggle\b/i.test(html)) {
+  if (!/<button\b[^<>]*\bdata-theme-toggle\b/i.test(html)) {
     problems.push("theme toggle: no button with data-theme-toggle");
   }
   if (!/prefers-reduced-motion/.test(html)) {
@@ -288,10 +292,11 @@ function checkBrandBook(html, options = {}) {
   return { problems, notes };
 }
 
-function readHtml(path) {
+function readHtml(path, shown) {
   try {
-    return existsSync(path) ? readFileSync(path, "utf8") : undefined;
-  } catch {
+    return existsSync(path) ? readInput(path, shown) : undefined;
+  } catch (error) {
+    if (error instanceof FileGuardError) throw error;
     return undefined;
   }
 }
@@ -332,7 +337,14 @@ function run(args, io) {
     return 2;
   }
   const path = resolve(io.cwd, files[0]);
-  const html = readHtml(path);
+  let html;
+  try {
+    html = readHtml(path, files[0]);
+  } catch (error) {
+    if (!(error instanceof FileGuardError)) throw error;
+    io.stderr.write(`${error.message}\n`);
+    return 2;
+  }
   if (html === undefined) {
     io.stderr.write(`Cannot read ${files[0]}\n`);
     return 2;

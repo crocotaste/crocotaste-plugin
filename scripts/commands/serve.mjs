@@ -2,6 +2,7 @@ import { spawn } from "node:child_process";
 import { createHash, randomBytes } from "node:crypto";
 import {
   existsSync,
+  lstatSync,
   mkdirSync,
   readdirSync,
   readFileSync,
@@ -13,11 +14,11 @@ import {
   writeFileSync,
 } from "node:fs";
 import { createServer, request } from "node:http";
-import { homedir, tmpdir } from "node:os";
+import { homedir } from "node:os";
 import { basename, dirname, join, relative, resolve, sep } from "node:path";
 
 const USAGE =
-  "crocotaste serve <file-or-dir> [--open] [--port N] [--idle-minutes N]\n";
+  "node scripts/crocotaste.mjs serve <file-or-dir> [--open] [--port N] [--idle-minutes N]\n";
 
 const HOST = "127.0.0.1";
 const CLIENT_PATH = new URL("../lib/preview-client.js", import.meta.url);
@@ -27,6 +28,11 @@ const KEEP_ALIVE_MS = 25_000;
 const PROBE_MS = 500;
 const MAX_TIMER_MS = 2 ** 31 - 1;
 const SECRET_HEADER = "x-crocotaste-preview";
+const PARENT_POLL_MS = 10_000;
+// The brand book and mockups carry inline style and script, and the
+// directions page loads its faces from Google Fonts.
+const CSP =
+  "default-src 'self'; connect-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data:; script-src 'self' 'unsafe-inline'";
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -67,20 +73,37 @@ function encodePath(path) {
   return path.split(/[\\/]/).map(encodeURIComponent).join("/");
 }
 
-// Per user, not the shared tmpdir, so another account cannot plant or read it.
+// Per user, never the shared tmpdir, so another account cannot plant or read
+// it; with no home folder there is no state at all.
 function stateDir() {
-  let home = "";
   try {
-    home = homedir();
+    const home = homedir();
+    return home ? join(home, ".cache", "crocotaste") : null;
   } catch {
-    // No home folder, as in some containers.
+    return null;
   }
-  return home ? join(home, ".cache", "crocotaste") : tmpdir();
 }
 
 function statePath(root) {
+  const dir = stateDir();
+  if (dir === null) return null;
   const hash = createHash("sha1").update(root).digest("hex").slice(0, 12);
-  return join(stateDir(), `crocotaste-preview-${hash}.json`);
+  return join(dir, `crocotaste-preview-${hash}.json`);
+}
+
+// Only a regular file this user wrote with mode 0600 is trusted; anything else
+// could be a plant pointing the preview at someone else's server.
+function readState(file) {
+  const stats = lstatSync(file);
+  if (!stats.isFile()) return null;
+  // Windows has no POSIX mode or owner to compare.
+  if (
+    process.platform !== "win32" &&
+    ((stats.mode & 0o777) !== 0o600 || stats.uid !== process.getuid())
+  ) {
+    return null;
+  }
+  return JSON.parse(readFileSync(file, "utf8"));
 }
 
 function writeState(file, state) {
@@ -195,15 +218,28 @@ function probe(port) {
   });
 }
 
-async function liveServer(root) {
+// A folder preview serves any page directly inside it; a file preview serves
+// only its own file.
+function covers(state, openPath) {
+  if (typeof state.only === "string") return state.only === openPath;
+  return (
+    openPath === undefined ||
+    (!/[\\/]/.test(openPath) && openPath.endsWith(".html"))
+  );
+}
+
+async function liveServer(root, openPath) {
+  const file = statePath(root);
+  if (file === null) return null;
   let state;
   try {
-    state = JSON.parse(readFileSync(statePath(root), "utf8"));
+    state = readState(file);
   } catch {
     return null;
   }
   if (
     state?.root !== root ||
+    !covers(state, openPath) ||
     !Number.isInteger(state.port) ||
     typeof state.secret !== "string" ||
     state.secret.length === 0
@@ -263,10 +299,17 @@ function startPreview({
   port = 0,
   idleMinutes = 60,
   open = false,
+  parentPid,
+  parentPollMs = PARENT_POLL_MS,
   io,
 }) {
   const realRoot = realpathSync.native(root);
   const stateFile = statePath(realRoot);
+  // A file target is the whole scope: nothing else in its folder is served.
+  const onlyFile =
+    openPath === undefined
+      ? undefined
+      : realpathSync.native(join(realRoot, openPath));
   const secret = randomBytes(16).toString("hex");
   const client = readFileSync(CLIENT_PATH);
   const clients = new Set();
@@ -275,6 +318,7 @@ function startPreview({
   let debounceTimer;
   let watcher;
   let closing;
+  let parentTimer;
   let stateWritten = false;
   let resolveClosed;
   const closed = new Promise((done) => (resolveClosed = done));
@@ -291,25 +335,34 @@ function startPreview({
   }
 
   // Every file goes through here, index included: a symlink must land inside
-  // root and on nothing hidden, or it does not exist.
+  // root, on nothing hidden and inside the scope, or it does not exist.
   function realFile(path) {
     const real = realpathSync.native(path);
     if (!inside(realRoot, real) || hasDotSegment(relative(realRoot, real))) {
       return null;
     }
+    if (!inScope(path) || !inScope(real)) return null;
     return statSync(real).isFile() ? real : null;
+  }
+
+  function inScope(path) {
+    if (onlyFile !== undefined) return path === onlyFile;
+    const rel = relative(realRoot, path);
+    return !rel.includes(sep) && rel.endsWith(".html");
   }
 
   function serveFile(res, path, head) {
     let body = readFileSync(path);
     const ext = path.slice(path.lastIndexOf(".")).toLowerCase();
-    if (ext === ".html") body = Buffer.from(inject(body.toString("utf8")));
+    const html = ext === ".html";
+    if (html) body = Buffer.from(inject(body.toString("utf8")));
     send(
       res,
       200,
       {
         "Content-Type": MIME[ext] ?? "application/octet-stream",
         "Content-Length": body.length,
+        ...(html ? { "Content-Security-Policy": CSP } : {}),
       },
       body,
       head
@@ -374,6 +427,7 @@ function startPreview({
     if (path === null) return notFound();
     try {
       if (path === realRoot) {
+        if (onlyFile !== undefined) return notFound();
         let index;
         try {
           index = realFile(join(realRoot, "index.html"));
@@ -387,7 +441,11 @@ function startPreview({
         return send(
           res,
           200,
-          { "Content-Type": MIME[".html"], "Content-Length": body.length },
+          {
+            "Content-Type": MIME[".html"],
+            "Content-Length": body.length,
+            "Content-Security-Policy": CSP,
+          },
           body,
           head
         );
@@ -413,6 +471,7 @@ function startPreview({
     clearTimeout(idleTimer);
     clearTimeout(debounceTimer);
     clearInterval(keepAlive);
+    clearInterval(parentTimer);
     watcher?.close();
     for (const res of clients) res.end();
     clients.clear();
@@ -423,8 +482,8 @@ function startPreview({
       // Only our own state file: a newer preview may have replaced it.
       if (stateWritten) {
         try {
-          const state = JSON.parse(readFileSync(stateFile, "utf8"));
-          if (state.secret === secret) rmSync(stateFile, { force: true });
+          const state = readState(stateFile);
+          if (state?.secret === secret) rmSync(stateFile, { force: true });
         } catch {
           // Already gone.
         }
@@ -464,14 +523,17 @@ function startPreview({
         (existsSync(join(realRoot, "index.html")) ? "index.html" : "");
       const url = `http://${HOST}:${actualPort}/${encodePath(page)}`;
       try {
-        writeState(stateFile, {
-          pid: process.pid,
-          port: actualPort,
-          url,
-          root: realRoot,
-          secret,
-        });
-        stateWritten = true;
+        if (stateFile !== null) {
+          writeState(stateFile, {
+            pid: process.pid,
+            port: actualPort,
+            url,
+            root: realRoot,
+            ...(openPath === undefined ? {} : { only: openPath }),
+            secret,
+          });
+          stateWritten = true;
+        }
       } catch {
         // The preview works without it; a second serve just starts another.
         io?.stderr.write(
@@ -479,6 +541,18 @@ function startPreview({
         );
       }
       touch();
+      // A preview outlives no session: when the process that started it is
+      // gone, so is the server.
+      if (parentPid !== undefined) {
+        parentTimer = setInterval(() => {
+          try {
+            process.kill(parentPid, 0);
+          } catch (error) {
+            if (error.code !== "EPERM") close();
+          }
+        }, parentPollMs);
+        parentTimer.unref();
+      }
       if (open) openBrowser(url);
       ready({ url, port: actualPort, close, closed });
     });
@@ -506,7 +580,7 @@ async function run(args, io) {
     ? undefined
     : relative(root, realpathSync.native(target));
 
-  const live = await liveServer(root);
+  const live = await liveServer(root, openPath);
   if (live) {
     const url = openPath
       ? `http://${HOST}:${live.port}/${encodePath(openPath)}`
@@ -520,7 +594,13 @@ async function run(args, io) {
 
   let preview;
   try {
-    preview = await startPreview({ ...options, root, openPath, io });
+    preview = await startPreview({
+      ...options,
+      root,
+      openPath,
+      parentPid: process.ppid,
+      io,
+    });
   } catch (error) {
     io.stderr.write(`Cannot start the preview: ${error.message}\n`);
     return 1;

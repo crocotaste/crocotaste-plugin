@@ -236,3 +236,38 @@ test("a copy of the template is unfilled everywhere, the template itself is clea
   );
   assert.equal(await run(["check", templatePath], io), 0);
 });
+
+test("a bright primary with a dark primary-text is not flagged", () => {
+  const bright = html
+    .replace("--color-primary: #2456e6;", "--color-primary: #f5c518;")
+    .replace("--color-primary-text: #ffffff;", "--color-primary-text: #16181d;")
+    // Focus follows primary in the fixture; a bright primary needs its own ring.
+    .replace("--color-focus: var(--color-primary);", "--color-focus: #2456e6;");
+  assert.deepEqual(checkBrandBook(bright).problems, []);
+});
+
+test("a 300 KB run of <a completes check in under one second", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "check-"));
+  writeFileSync(join(dir, "BRAND.html"), "<a".repeat(150 * 1024));
+  const started = performance.now();
+  const code = await run(["check", "BRAND.html"], {
+    stdout: { write: () => {} },
+    stderr: { write: () => {} },
+    cwd: dir,
+  });
+  assert.equal(code, 1);
+  assert.ok(performance.now() - started < 1000);
+});
+
+test("a brand book over 2 MB is refused with 2", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "check-"));
+  writeFileSync(join(dir, "BRAND.html"), "x".repeat(2 * 1024 * 1024 + 1));
+  let err = "";
+  const code = await run(["check", "BRAND.html"], {
+    stdout: { write: () => {} },
+    stderr: { write: (text) => (err += text) },
+    cwd: dir,
+  });
+  assert.equal(code, 2);
+  assert.equal(err, "file too large (max 2 MB): BRAND.html\n");
+});

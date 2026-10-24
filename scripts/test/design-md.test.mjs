@@ -5,6 +5,7 @@ import { parseTokens, readTokenBlock } from "../lib/css-tokens.mjs";
 import { parseYaml } from "../lib/yaml.mjs";
 import {
   frontmatterFromTokens,
+  keptCount,
   mergeFrontmatter,
   ownedKeysOf,
   readComponents,
@@ -145,4 +146,43 @@ test("typography always has a fontFamily, falling back to the body role", () => 
     warnings: [],
   });
   assert.equal(fm.typography.small.fontFamily, "Inter");
+});
+
+test("mergeFrontmatter keeps a hand-added sub-key under an owned component and an owned type style", () => {
+  const generated = frontmatterFromTokens(tokens, readComponents(html));
+  const existing = {
+    components: {
+      "button-primary": {
+        backgroundColor: "{colors.ink}",
+        padding: "12px",
+        height: "40px",
+      },
+    },
+    typography: { body: { fontSize: "99px", fontFeature: "tnum" } },
+  };
+  const owned = ownedKeysOf(
+    generated,
+    Object.keys(readComponents(html).components)
+  );
+  const merged = mergeFrontmatter(existing, generated, owned);
+  const button = merged.components["button-primary"];
+  assert.equal(button.padding, "12px");
+  assert.equal(button.height, "40px");
+  assert.equal(button.backgroundColor, "{colors.primary}");
+  assert.equal(merged.typography.body.fontFeature, "tnum");
+  assert.equal(merged.typography.body.fontSize, "16px");
+  assert.equal(keptCount(existing, merged, generated), 3);
+});
+
+test("mergeFrontmatter removes an owned sub-key this run no longer emits", () => {
+  const generated = frontmatterFromTokens(tokens, readComponents(html));
+  const existing = {
+    components: { "button-primary": { borderColor: "{colors.ink}" } },
+  };
+  const owned = ownedKeysOf(
+    generated,
+    Object.keys(readComponents(html).components)
+  );
+  const merged = mergeFrontmatter(existing, generated, owned);
+  assert.equal(merged.components["button-primary"].borderColor, undefined);
 });
