@@ -1,0 +1,39 @@
+name: Bug
+description: Something in the plugin did not work as it should.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did and what you saw. Paste any error output.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: input
+    id: skill
+    attributes:
+      label: The command or skill
+      placeholder: /crocotaste:guidelines, or crocotaste check BRAND.html
+    validations:
+      required: true
+  - type: input
+    id: agent
+    attributes:
+      label: The agent and its version
+      placeholder: Claude Code 2.x
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: The plugin version
+      description: Shown by `claude plugin list`.
+      placeholder: "1.0.0"
+    validations:
+      required: true

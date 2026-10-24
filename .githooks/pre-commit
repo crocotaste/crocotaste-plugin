@@ -1,0 +1,3 @@
+#!/bin/sh
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT" && node "$ROOT/checks/guards.mjs" --staged

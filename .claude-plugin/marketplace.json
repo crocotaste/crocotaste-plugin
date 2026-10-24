@@ -1,0 +1,17 @@
+{
+  "name": "crocotaste",
+  "description": "Your brand, design guidelines and mockups, made with your coding agent. Then Crocotaste keeps every pull request on-system.",
+  "owner": {
+    "name": "Crocotaste"
+  },
+  "plugins": [
+    {
+      "name": "crocotaste",
+      "description": "Your brand, design guidelines and mockups, made with your coding agent. Then Crocotaste keeps every pull request on-system.",
+      "source": "./",
+      "author": {
+        "name": "Crocotaste"
+      }
+    }
+  ]
+}

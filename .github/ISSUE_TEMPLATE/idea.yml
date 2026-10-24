@@ -1,0 +1,17 @@
+name: Idea
+description: Something the plugin could do, or do better.
+labels: [idea]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: The idea
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem it solves
+      description: Who runs into it, and what they do today instead.
+    validations:
+      required: true
