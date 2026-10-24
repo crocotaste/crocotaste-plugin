@@ -104,6 +104,25 @@ test("parseTokens resolves a nested var() fallback", () => {
   assert.equal(light.get("d"), "var(--nope, var(--gone))");
 });
 
+test("parseTokens resolves a chain of fallbacks in linear time", () => {
+  // Each level names the one below twice and none resolves; without a memo
+  // this is 2^40 lookups.
+  const lines = ["--t0: var(--nope);"];
+  for (let i = 1; i <= 40; i++) {
+    lines.push(`--t${i}: var(--t${i - 1}, var(--t${i - 1}));`);
+  }
+  const started = performance.now();
+  const { light } = parseTokens(`:root { ${lines.join(" ")} }`);
+  assert.ok(performance.now() - started < 1000);
+  assert.equal(light.get("t40"), "var(--t39, var(--t39))");
+  // A fallback that only a cycle reaches is not remembered for the top level.
+  const cyclic = parseTokens(
+    ":root { --a: var(--b, #111); --b: var(--a, #222); }"
+  );
+  assert.equal(cyclic.light.get("a"), "#222");
+  assert.equal(cyclic.light.get("b"), "#111");
+});
+
 test("parseColor handles hex, rgb, rgba, hsl and rejects names", () => {
   assert.deepEqual(parseColor("#fff"), { r: 255, g: 255, b: 255, a: 1 });
   assert.deepEqual(parseColor("#2456e6"), { r: 36, g: 86, b: 230, a: 1 });

@@ -194,15 +194,28 @@ function substitute(text, lookup, seen) {
 }
 
 function resolveSet(set, fallback) {
+  // Outside a cycle a name's result does not depend on the path to it, so
+  // remembering it keeps a fallback that names a token twice per level
+  // from resolving in exponential time.
+  const memo = new Map();
+  let cycleHits = 0;
   const lookup = (name, seen) => {
+    if (memo.has(name)) return memo.get(name);
     const raw = set.get(name) ?? fallback?.get(name);
-    if (raw === undefined || seen.has(name)) return undefined;
+    if (raw === undefined) return undefined;
+    if (seen.has(name)) {
+      cycleHits += 1;
+      return undefined;
+    }
+    const hitsBefore = cycleHits;
     const { value, resolved } = substitute(
       raw,
       lookup,
       new Set(seen).add(name)
     );
-    return resolved && !value.includes("var(") ? value : undefined;
+    const out = resolved && !value.includes("var(") ? value : undefined;
+    if (cycleHits === hitsBefore) memo.set(name, out);
+    return out;
   };
   const result = new Map();
   for (const name of set.keys()) {

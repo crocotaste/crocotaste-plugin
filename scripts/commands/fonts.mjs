@@ -80,6 +80,11 @@ async function fontFaceCss(css2, download, keepSubsets = ["latin"]) {
   for (const { subset, rule } of kept) {
     const match = rule.match(SRC_URL);
     if (!match) continue;
+    // Only the first url() is checked and inlined; a second would land in
+    // the book as it came.
+    if ((rule.match(/url\(/g) ?? []).length > 1) {
+      throw new FontRefusal("refusing a font face with more than one url()");
+    }
     if (!match[2].startsWith(FONT_HOST)) {
       throw new FontRefusal(
         `refusing a font URL outside ${FONT_HOST}: ${match[2]}`

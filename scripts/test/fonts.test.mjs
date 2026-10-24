@@ -190,6 +190,19 @@ test("a face with < in its text is refused", async () => {
   );
 });
 
+test("a face with a second url() is refused", async () => {
+  // The latin face is the one kept; a second url() on it must stop the run.
+  const doubled = css2.replace(
+    "-lat.woff2) format('woff2');",
+    "-lat.woff2) format('woff2'), url(https://evil.example/x.woff) format('woff');"
+  );
+  assert.notEqual(doubled, css2);
+  await assert.rejects(
+    fontFaceCss(doubled, async () => BYTES),
+    /refusing a font face with more than one url\(\)/
+  );
+});
+
 test("an over-cap body is refused", async () => {
   const dir = setup();
   const sandbox = io(dir, async (url) =>

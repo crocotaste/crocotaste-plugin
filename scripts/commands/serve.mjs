@@ -544,7 +544,11 @@ function startPreview({
       // A preview outlives no session: when the process that started it is
       // gone, so is the server.
       if (parentPid !== undefined) {
+        // A dead parent's pid can be handed to a new process, but a
+        // reparenting shows in ppid; both mean the session is over.
+        const ownParent = parentPid === process.ppid;
         parentTimer = setInterval(() => {
+          if (ownParent && process.ppid !== parentPid) return close();
           try {
             process.kill(parentPid, 0);
           } catch (error) {
