@@ -1,5 +1,6 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, realpathSync } from "node:fs";
 import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { CONTRAST_PAIRS, contrastRatio } from "../lib/contrast.mjs";
 import {
   parseColor,
@@ -10,7 +11,25 @@ import {
   TokenBlockError,
 } from "../lib/css-tokens.mjs";
 
-const USAGE = "crocotaste check <BRAND.html> [--json]\n";
+const USAGE =
+  "crocotaste check <BRAND.html> [--json]\n       crocotaste check --samples <file>\n";
+
+// The template's own copy, listed so a brand book that still carries it is
+// caught. Next to the plugin, never the user's cwd.
+const SAMPLES = new URL("../lib/template-samples.json", import.meta.url);
+const TEMPLATE = new URL(
+  "../../skills/guidelines/templates/brand-book.html",
+  import.meta.url
+);
+
+const ENTITIES = {
+  amp: "&",
+  lt: "<",
+  gt: ">",
+  quot: '"',
+  "#39": "'",
+  nbsp: " ",
+};
 
 const CHAPTERS = [
   "foundations",
@@ -153,7 +172,10 @@ function elementContent(html, id) {
       "i"
     )
   );
-  if (!open) return undefined;
+  return open ? contentFrom(html, open) : undefined;
+}
+
+function contentFrom(html, open) {
   const name = open[1];
   const start = open.index + open[0].length;
   if (open[0].endsWith("/>")) return "";
@@ -188,6 +210,38 @@ function componentRules(html) {
   return { problems, notes: [] };
 }
 
+function textOf(fragment) {
+  return fragment
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&(amp|lt|gt|quot|#39|nbsp);/g, (_, name) => ENTITIES[name])
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function samplesOf(html) {
+  const samples = {};
+  const duplicates = [];
+  const tags = /<([a-z][\w-]*)\b[^>]*(?<![\w-])data-fill=(["'])(.*?)\2[^>]*>/gi;
+  for (const open of html.matchAll(tags)) {
+    const id = open[3];
+    if (id in samples) {
+      if (!duplicates.includes(id)) duplicates.push(id);
+      continue;
+    }
+    samples[id] = textOf(contentFrom(html, open));
+  }
+  return { samples, duplicates };
+}
+
+function fillRules(html, options) {
+  if (!options.samples) return { problems: [], notes: [] };
+  const problems = [];
+  for (const [id, text] of Object.entries(samplesOf(html).samples)) {
+    if (options.samples[id] === text) problems.push(`unfilled: ${id}`);
+  }
+  return { problems, notes: [] };
+}
+
 function documentRules(html) {
   const problems = [];
   const notes = [];
@@ -214,42 +268,77 @@ function documentRules(html) {
   return { problems, notes };
 }
 
-// The one place a later rule (fills, samples) is added.
-const RULES = [chapterRules, tokenRules, componentRules, documentRules];
+// The one place a later rule is added.
+const RULES = [
+  chapterRules,
+  tokenRules,
+  componentRules,
+  documentRules,
+  fillRules,
+];
 
-function checkBrandBook(html) {
+function checkBrandBook(html, options = {}) {
   const problems = [];
   const notes = [];
   for (const rule of RULES) {
-    const result = rule(html);
+    const result = rule(html, options);
     problems.push(...result.problems);
     notes.push(...result.notes);
   }
   return { problems, notes };
 }
 
+function readHtml(path) {
+  try {
+    return existsSync(path) ? readFileSync(path, "utf8") : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function sameFile(a, b) {
+  try {
+    return realpathSync(a) === realpathSync(b);
+  } catch {
+    return false;
+  }
+}
+
+// The template is the one file whose samples are meant to stay.
+function samplesFor(path) {
+  if (!existsSync(SAMPLES) || sameFile(path, fileURLToPath(TEMPLATE))) {
+    return undefined;
+  }
+  return JSON.parse(readFileSync(SAMPLES, "utf8"));
+}
+
+function printSamples(html, io) {
+  const { samples, duplicates } = samplesOf(html);
+  for (const id of duplicates) io.stderr.write(`duplicate data-fill: ${id}\n`);
+  if (duplicates.length > 0) return 1;
+  io.stdout.write(`${JSON.stringify(samples, null, 2)}\n`);
+  return 0;
+}
+
 function run(args, io) {
   const json = args.includes("--json");
+  const samples = args.includes("--samples");
   const files = args.filter((arg) => !arg.startsWith("--"));
   const unknown = args.filter(
-    (arg) => arg.startsWith("--") && arg !== "--json"
+    (arg) => arg.startsWith("--") && arg !== "--json" && arg !== "--samples"
   );
-  if (files.length !== 1 || unknown.length > 0) {
+  if (files.length !== 1 || unknown.length > 0 || (json && samples)) {
     io.stderr.write(`Usage: ${USAGE}`);
     return 2;
   }
   const path = resolve(io.cwd, files[0]);
-  let html;
-  try {
-    html = existsSync(path) ? readFileSync(path, "utf8") : undefined;
-  } catch {
-    html = undefined;
-  }
+  const html = readHtml(path);
   if (html === undefined) {
     io.stderr.write(`Cannot read ${files[0]}\n`);
     return 2;
   }
-  const result = checkBrandBook(html);
+  if (samples) return printSamples(html, io);
+  const result = checkBrandBook(html, { samples: samplesFor(path) });
   if (json) {
     io.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
   } else {
@@ -263,4 +352,4 @@ function run(args, io) {
   return result.problems.length === 0 ? 0 : 1;
 }
 
-export { checkBrandBook, run };
+export { checkBrandBook, run, samplesOf };

@@ -1,0 +1,1703 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sample · Design guidelines</title>
+    <script>
+      try {
+        var savedTheme = localStorage.getItem("brand-theme");
+        if (savedTheme) document.documentElement.dataset.theme = savedTheme;
+      } catch (e) {}
+    </script>
+    <style>
+    /* <!-- fonts:start --> */
+    /* <!-- fonts:end --> */
+    /* <!-- tokens:start --> */
+    :root {
+    --color-canvas: #fbfaf8;
+    --color-surface: #f3f1ec;
+    --color-surface-raised: #ffffff;
+    --color-border: #e3dfd7;
+    --color-border-strong: #8f897e;
+    --color-text: #1c1a17;
+    --color-text-muted: #5a554d;
+    --color-text-faint: #7a746a;
+    --color-text-inverse: #ffffff;
+    --color-primary: #0f6b60;
+    --color-primary-hover: #0b5a51;
+    --color-primary-active: #084a42;
+    --color-primary-text: #ffffff;
+    --color-primary-soft: #dcefea;
+    --color-accent: #c0532a;
+    --color-success: #23794a;
+    --color-warning: #a35f00;
+    --color-danger: #c22f49;
+    --color-focus: var(--color-primary);
+    --color-scrim: rgba(28, 26, 23, 0.48);
+    --color-shadow: rgba(28, 26, 23, 0.1);
+    --font-display: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+    --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-6: 24px;
+    --space-8: 32px;
+    --space-12: 48px;
+    --space-16: 64px;
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --radius-full: 9999px;
+    --text-display: 56px;
+    --text-display-weight: 700;
+    --text-display-leading: 1.05;
+    --text-display-family: display;
+    --text-display-tracking: -0.025em;
+    --text-title: 36px;
+    --text-title-weight: 700;
+    --text-title-leading: 1.15;
+    --text-title-family: display;
+    --text-title-tracking: -0.015em;
+    --text-heading: 22px;
+    --text-heading-weight: 600;
+    --text-heading-leading: 1.3;
+    --text-heading-family: display;
+    --text-heading-tracking: -0.005em;
+    --text-body: 16px;
+    --text-body-weight: 400;
+    --text-body-leading: 1.55;
+    --text-body-family: body;
+    --text-body-tracking: 0;
+    --text-small: 14px;
+    --text-small-weight: 400;
+    --text-small-leading: 1.5;
+    --text-small-family: body;
+    --text-small-tracking: 0;
+    --text-caption: 12px;
+    --text-caption-weight: 500;
+    --text-caption-leading: 1.4;
+    --text-caption-family: body;
+    --text-caption-tracking: 0.01em;
+    --motion-fast: 120ms;
+    --motion-base: 200ms;
+    --motion-slow: 360ms;
+    --ease: cubic-bezier(0.2, 0, 0, 1);
+    --shadow-sm: 0 1px 2px var(--color-shadow);
+    --shadow-md: 0 4px 12px var(--color-shadow);
+    --shadow-lg: 0 16px 40px var(--color-shadow);
+    --border-width: 1px;
+    --border-width-strong: 2px;
+    }
+    [data-theme="dark"] {
+    --color-canvas: #121211;
+    --color-surface: #1a1917;
+    --color-surface-raised: #23221f;
+    --color-border: #302e2a;
+    --color-border-strong: #6e6960;
+    --color-text: #f2f0eb;
+    --color-text-muted: #b3ada2;
+    --color-text-faint: #8c867b;
+    --color-text-inverse: #121211;
+    --color-primary: #5cc6b4;
+    --color-primary-hover: #7dd3c4;
+    --color-primary-active: #a0e0d4;
+    --color-primary-text: #0b1f1b;
+    --color-primary-soft: #16302b;
+    --color-accent: #e8875c;
+    --color-success: #5cc68a;
+    --color-warning: #e2a447;
+    --color-danger: #f17d8e;
+    --color-focus: var(--color-primary);
+    --color-scrim: rgba(0, 0, 0, 0.64);
+    --color-shadow: rgba(0, 0, 0, 0.45);
+    --shadow-sm: 0 1px 2px var(--color-shadow);
+    --shadow-md: 0 4px 12px var(--color-shadow);
+    --shadow-lg: 0 16px 40px var(--color-shadow);
+    }
+    /* <!-- tokens:end --> */
+
+    /* Page layout. Lengths outside the brand's tokens live here, named. */
+    :root {
+      --book-sidebar: 15rem;
+      --book-content: 65rem;
+      --book-target: var(--space-6);
+      --book-control: calc(var(--space-8) + var(--space-2));
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: var(--space-8); -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      background: var(--color-canvas);
+      color: var(--color-text);
+      font-family: var(--font-body);
+      font-size: var(--text-body);
+      font-weight: var(--text-body-weight);
+      line-height: var(--text-body-leading);
+      letter-spacing: var(--text-body-tracking);
+      -webkit-font-smoothing: antialiased;
+    }
+    [data-theme] { color: var(--color-text); }
+    h1, h2, h3, h4, p, figure, ol, ul, dl, dd { margin: 0; }
+    svg { display: block; flex: none; }
+    svg[hidden] { display: none; }
+    button, input, select { font: inherit; color: inherit; letter-spacing: inherit; }
+    code, .mono { font-family: var(--font-mono); }
+    a { color: var(--color-primary); text-underline-offset: var(--space-1); }
+    :focus-visible { outline: var(--border-width-strong) solid var(--color-focus); outline-offset: var(--border-width-strong); }
+    .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+    .skip {
+      position: fixed; top: var(--space-2); left: var(--space-2); z-index: 10;
+      padding: var(--space-2) var(--space-4); border-radius: var(--radius-md);
+      background: var(--color-primary); color: var(--color-primary-text);
+      transform: translateY(calc(-100% - var(--space-4)));
+    }
+    .skip:focus { transform: none; }
+
+    /* Sidebar */
+    [data-sidebar] {
+      position: fixed; top: 0; bottom: 0; left: 0; z-index: 5;
+      width: var(--book-sidebar);
+      display: flex; flex-direction: column; gap: var(--space-8);
+      padding: var(--space-8) var(--space-4);
+      background: var(--color-surface);
+      border-right: var(--border-width) solid var(--color-border);
+      overflow-y: auto;
+    }
+    .sidebar-brand {
+      display: flex; align-items: center; gap: var(--space-3);
+      padding: 0 var(--space-3);
+      color: var(--color-text); text-decoration: none;
+    }
+    .sidebar-brand .mark { width: var(--space-6); height: var(--space-6); }
+    .sidebar-brand .wordmark { font-size: calc(var(--text-heading) * 0.9); }
+    .sidebar-title {
+      display: block;
+      font-size: var(--text-caption); font-weight: var(--text-caption-weight);
+      line-height: var(--text-caption-leading); color: var(--color-text-muted);
+    }
+    .sidebar-list {
+      position: relative;
+      list-style: none; margin: 0; padding: 0;
+      display: flex; flex-direction: column; gap: var(--space-1);
+    }
+    .sidebar-list a {
+      display: flex; align-items: baseline; gap: var(--space-3);
+      min-height: var(--book-target);
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-md);
+      color: var(--color-text-muted); text-decoration: none;
+      font-size: var(--text-small); line-height: var(--text-small-leading);
+      transition: background-color var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease);
+    }
+    .sidebar-list a:hover { background: var(--color-surface-raised); color: var(--color-text); }
+    .sidebar-list a[aria-current="true"] { background: var(--color-primary-soft); color: var(--color-text); font-weight: 600; }
+    .nn { font-family: var(--font-mono); font-size: var(--text-caption); font-weight: 500; color: var(--color-text-muted); }
+    .sidebar-foot { margin-top: auto; padding: 0 var(--space-3); font-size: var(--text-caption); line-height: var(--text-caption-leading); color: var(--color-text-muted); }
+
+    /* Main column */
+    .book { margin-left: var(--book-sidebar); padding: var(--space-16) var(--space-12) calc(var(--space-16) * 2); }
+    .book-inner { max-width: var(--book-content); margin: 0 auto; }
+
+    .cover { padding-bottom: var(--space-12); border-bottom: var(--border-width) solid var(--color-border); }
+    .cover .lockup { --mark-size: var(--space-12); margin-bottom: var(--space-8); }
+    .cover h1 {
+      font-family: var(--font-display); font-size: var(--text-display); font-weight: var(--text-display-weight);
+      line-height: var(--text-display-leading); letter-spacing: var(--text-display-tracking);
+      max-width: calc(var(--space-16) * 9);
+    }
+    .cover .lede { margin-top: var(--space-4); }
+    .cover-meta { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-8); padding: 0; list-style: none; }
+    .chip {
+      display: inline-flex; align-items: center; gap: var(--space-2);
+      min-height: var(--space-8); padding: 0 var(--space-3);
+      border: var(--border-width) solid var(--color-border); border-radius: var(--radius-full);
+      background: var(--color-surface-raised);
+      font-size: var(--text-caption); font-weight: var(--text-caption-weight); color: var(--color-text-muted);
+    }
+    .chip svg { width: var(--space-4); height: var(--space-4); color: var(--color-primary); }
+
+    .chapter { padding-top: var(--space-16); }
+    .chapter + .chapter { margin-top: var(--space-16); border-top: var(--border-width) solid var(--color-border); }
+    .chapter-head { display: flex; align-items: baseline; gap: var(--space-4); margin-bottom: var(--space-4); }
+    .chapter-nn { font-family: var(--font-mono); font-size: var(--text-small); font-weight: 600; color: var(--color-primary); }
+    .chapter h2 {
+      font-family: var(--font-display); font-size: var(--text-title); font-weight: var(--text-title-weight);
+      line-height: var(--text-title-leading); letter-spacing: var(--text-title-tracking);
+    }
+    .chapter h3 {
+      margin: var(--space-12) 0 var(--space-4);
+      font-family: var(--font-display); font-size: var(--text-heading); font-weight: var(--text-heading-weight);
+      line-height: var(--text-heading-leading); letter-spacing: var(--text-heading-tracking);
+    }
+    .chapter h4 { font-size: var(--text-small); font-weight: 600; line-height: var(--text-small-leading); }
+    .lede { max-width: calc(var(--space-16) * 10); font-size: calc(var(--text-body) * 1.125); color: var(--color-text-muted); }
+    .note { max-width: calc(var(--space-16) * 10); margin-top: var(--space-4); font-size: var(--text-small); line-height: var(--text-small-leading); color: var(--color-text-muted); }
+    .caption { font-size: var(--text-caption); font-weight: var(--text-caption-weight); line-height: var(--text-caption-leading); letter-spacing: var(--text-caption-tracking); color: var(--color-text-muted); }
+
+    .callout {
+      display: flex; gap: var(--space-3); align-items: flex-start;
+      margin-top: var(--space-8); padding: var(--space-4);
+      border: var(--border-width) solid var(--color-border-strong); border-radius: var(--radius-md);
+      background: var(--color-surface);
+      font-size: var(--text-small); line-height: var(--text-small-leading);
+    }
+    .callout svg { width: var(--space-6); height: var(--space-6); color: var(--color-accent); }
+
+    .grid { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fill, minmax(calc(var(--space-16) * 4), 1fr)); }
+    .tile {
+      padding: var(--space-6);
+      background: var(--color-surface); border: var(--border-width) solid var(--color-border); border-radius: var(--radius-lg);
+    }
+
+    /* 01 Foundations */
+    .product {
+      max-width: calc(var(--space-16) * 12);
+      font-family: var(--font-display); font-size: calc(var(--text-heading) * 1.2); font-weight: 500;
+      line-height: var(--text-heading-leading); letter-spacing: var(--text-heading-tracking);
+    }
+    .feel { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4); padding: 0; list-style: none; }
+    .feel li {
+      padding: var(--space-6);
+      background: var(--color-primary-soft); border-radius: var(--radius-lg);
+      font-family: var(--font-display); font-size: var(--text-title); font-weight: var(--text-title-weight);
+      line-height: var(--text-title-leading); letter-spacing: var(--text-title-tracking);
+    }
+    .principles { counter-reset: principle; padding: 0; list-style: none; }
+    .principles li { counter-increment: principle; display: flex; flex-direction: column; gap: var(--space-2); }
+    .principles li::before { content: counter(principle, decimal-leading-zero); font-family: var(--font-mono); font-size: var(--text-small); font-weight: 600; color: var(--color-primary); }
+    .principles h4 { font-family: var(--font-display); font-size: calc(var(--text-heading) * 0.9); font-weight: var(--text-heading-weight); line-height: var(--text-heading-leading); }
+    .principles p { font-size: var(--text-small); line-height: var(--text-small-leading); color: var(--color-text-muted); }
+
+    /* 02 Mark */
+    .mark { width: var(--mark-size, var(--space-8)); height: var(--mark-size, var(--space-8)); }
+    .mark-shape { fill: var(--mark-fill, var(--color-primary)); }
+    .wordmark {
+      font-family: var(--font-display); font-weight: var(--text-title-weight);
+      letter-spacing: var(--text-title-tracking); line-height: 1; color: var(--color-text);
+    }
+    .lockup { display: inline-flex; align-items: center; gap: calc(var(--mark-size, var(--space-8)) * 0.3); }
+    .lockup .wordmark { font-size: calc(var(--mark-size, var(--space-8)) * 0.72); }
+    .stage {
+      display: grid; place-items: center;
+      min-height: calc(var(--space-16) * 4); padding: var(--space-12) var(--space-6);
+      background: var(--color-canvas); border: var(--border-width) solid var(--color-border); border-radius: var(--radius-lg);
+    }
+    .stage .lockup { --mark-size: calc(var(--space-16) * 1.5); }
+    .sizes { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-8) var(--space-12); }
+    .sizes figure { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-3); }
+    .grounds { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4); }
+    .ground {
+      display: flex; flex-direction: column; gap: var(--space-8); justify-content: space-between;
+      min-height: calc(var(--space-16) * 3); padding: var(--space-6);
+      background: var(--color-canvas); border: var(--border-width) solid var(--color-border); border-radius: var(--radius-lg);
+    }
+    .ground .lockup { --mark-size: var(--space-12); }
+    .ground .caption { color: var(--color-text-muted); }
+    .ground.on-primary { background: var(--color-primary); border-color: var(--color-primary); }
+    .on-primary { --mark-fill: var(--color-primary-text); }
+    .on-primary .wordmark, .on-primary .caption { color: var(--color-primary-text); }
+    .clearspace-row { display: flex; flex-wrap: wrap; gap: var(--space-8); align-items: center; }
+    .clearspace {
+      --mark-size: calc(var(--space-16) * 1.25);
+      padding: calc(var(--mark-size) / 4);
+      border: var(--border-width) dashed var(--color-accent);
+      border-radius: var(--radius-sm);
+      background: var(--color-surface);
+    }
+    .clearspace-row .note { margin-top: 0; flex: 1; min-width: calc(var(--space-16) * 3); }
+
+    /* 03 Color */
+    .roles { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: var(--space-4); }
+    .role { display: flex; flex-direction: column; border: var(--border-width) solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden; background: var(--color-surface-raised); }
+    .role-fill { min-height: calc(var(--space-16) * 2); padding: var(--space-4); font-family: var(--font-mono); font-size: var(--text-caption); }
+    .role-body { display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-4); font-size: var(--text-small); line-height: var(--text-small-leading); }
+    .role-body p { color: var(--color-text-muted); }
+    .role-primary .role-fill { background: var(--color-primary); color: var(--color-primary-text); }
+    .role-accent .role-fill { background: var(--color-accent); color: var(--color-text-inverse); }
+    .role-neutral .role-fill { background: var(--color-surface); color: var(--color-text-muted); border-bottom: var(--border-width) solid var(--color-border); }
+    .swatch-groups { margin-top: var(--space-6); }
+    .swatch-group + .swatch-group { margin-top: var(--space-8); }
+    .swatch-group h4 { margin-bottom: var(--space-3); }
+    .swatches { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fill, minmax(calc(var(--space-16) * 2.75), 1fr)); }
+    .swatch { display: flex; flex-direction: column; gap: var(--space-2); }
+    .swatch-chip { display: grid; grid-template-columns: 1fr 1fr; height: var(--space-16); border: var(--border-width) solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; }
+    .swatch figcaption { display: flex; flex-direction: column; font-size: var(--text-caption); line-height: var(--text-caption-leading); color: var(--color-text-muted); }
+    .swatch figcaption code { color: var(--color-text); font-size: var(--text-caption); }
+    .table-wrap { overflow-x: auto; border: var(--border-width) solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface-raised); }
+    .data { width: 100%; border-collapse: collapse; font-size: var(--text-small); line-height: var(--text-small-leading); }
+    .data th, .data td { padding: var(--space-3) var(--space-4); text-align: left; vertical-align: middle; border-bottom: var(--border-width) solid var(--color-border); }
+    .data thead th { background: var(--color-surface); font-size: var(--text-caption); font-weight: 600; color: var(--color-text-muted); white-space: nowrap; }
+    .data tbody tr:last-child td { border-bottom: 0; }
+    .measure { display: flex; align-items: center; gap: var(--space-3); white-space: nowrap; }
+    .sample-aa {
+      display: grid; place-items: center; flex: none;
+      width: var(--space-8); height: var(--space-8); border-radius: var(--radius-sm);
+      border: var(--border-width) solid var(--color-border);
+      font-weight: 600; font-size: var(--text-small);
+    }
+    .verdict { display: inline-flex; align-items: center; gap: var(--space-1); font-weight: 600; }
+    .verdict svg { width: var(--space-4); height: var(--space-4); }
+    .verdict.pass { color: var(--color-success); }
+    .verdict.fail { color: var(--color-danger); }
+
+    /* 04 Typography */
+    .faces { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4); }
+    .face { display: flex; flex-direction: column; gap: var(--space-3); }
+    .face-aa { font-size: calc(var(--text-display) * 1.15); line-height: 1; letter-spacing: var(--text-display-tracking); }
+    .face-name { font-weight: 600; }
+    .face p { font-size: var(--text-small); line-height: var(--text-small-leading); color: var(--color-text-muted); }
+    .face-display .face-aa { font-family: var(--font-display); font-weight: var(--text-display-weight); }
+    .face-body .face-aa { font-family: var(--font-body); font-weight: 500; }
+    .face-mono .face-aa { font-family: var(--font-mono); font-weight: 500; letter-spacing: 0; }
+    .scale { display: flex; flex-direction: column; border-top: var(--border-width) solid var(--color-border); }
+    .scale-row { display: grid; grid-template-columns: calc(var(--space-16) * 3.5) 1fr; gap: var(--space-6); align-items: baseline; padding: var(--space-6) 0; border-bottom: var(--border-width) solid var(--color-border); }
+    .scale-meta { display: flex; flex-direction: column; gap: var(--space-1); }
+    .scale-meta code { font-size: var(--text-small); color: var(--color-text); font-weight: 600; }
+    .scale-row > p { min-width: 0; overflow-wrap: anywhere; }
+    .t-display { font-family: var(--book-font-display, var(--font-display)); font-size: var(--text-display); font-weight: var(--text-display-weight); line-height: var(--text-display-leading); letter-spacing: var(--text-display-tracking); }
+    .t-title { font-family: var(--book-font-title, var(--font-display)); font-size: var(--text-title); font-weight: var(--text-title-weight); line-height: var(--text-title-leading); letter-spacing: var(--text-title-tracking); }
+    .t-heading { font-family: var(--book-font-heading, var(--font-display)); font-size: var(--text-heading); font-weight: var(--text-heading-weight); line-height: var(--text-heading-leading); letter-spacing: var(--text-heading-tracking); }
+    .t-body { font-family: var(--book-font-body, var(--font-body)); font-size: var(--text-body); font-weight: var(--text-body-weight); line-height: var(--text-body-leading); letter-spacing: var(--text-body-tracking); }
+    .t-small { font-family: var(--book-font-small, var(--font-body)); font-size: var(--text-small); font-weight: var(--text-small-weight); line-height: var(--text-small-leading); letter-spacing: var(--text-small-tracking); }
+    .t-caption { font-family: var(--book-font-caption, var(--font-body)); font-size: var(--text-caption); font-weight: var(--text-caption-weight); line-height: var(--text-caption-leading); letter-spacing: var(--text-caption-tracking); }
+    .paragraph { max-width: calc(var(--space-16) * 10); }
+
+    /* 05 Spacing */
+    .space-list { display: flex; flex-direction: column; gap: var(--space-2); padding: 0; list-style: none; }
+    .space-list li { display: grid; grid-template-columns: calc(var(--space-16) * 1.5) var(--space-12) 1fr; gap: var(--space-4); align-items: center; font-size: var(--text-small); }
+    .space-list code { color: var(--color-text); }
+    .space-bar { height: var(--space-3); background: var(--color-primary); }
+    .space-value { color: var(--color-text-muted); font-family: var(--font-mono); font-size: var(--text-caption); }
+    .shapes { display: flex; flex-wrap: wrap; gap: var(--space-6); }
+    .shapes figure { display: flex; flex-direction: column; gap: var(--space-2); font-size: var(--text-caption); color: var(--color-text-muted); }
+    .shapes code { color: var(--color-text); }
+    .radius-box { width: calc(var(--space-16) * 1.5); height: calc(var(--space-16) * 1.5); background: var(--color-primary-soft); border: var(--border-width-strong) solid var(--color-primary); }
+    .shadows { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-6); padding: var(--space-6); background: var(--color-surface); border-radius: var(--radius-lg); }
+    .shadow-card { display: flex; flex-direction: column; justify-content: flex-end; gap: var(--space-1); min-height: calc(var(--space-16) * 1.75); padding: var(--space-4); background: var(--color-surface-raised); border-radius: var(--radius-md); font-size: var(--text-caption); color: var(--color-text-muted); }
+    .shadow-card code { color: var(--color-text); }
+    .borders { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+    .border-sample { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4); background: var(--color-surface-raised); border-radius: var(--radius-md); font-size: var(--text-caption); color: var(--color-text-muted); }
+    .border-sample code { color: var(--color-text); }
+    .border-line { height: 0; border-top-style: solid; }
+
+    /* 06 Iconography */
+    .icons { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--space-16) * 1.75), 1fr)); gap: var(--space-3); padding: 0; list-style: none; }
+    .icons li { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); padding: var(--space-4) var(--space-2); background: var(--color-surface); border: var(--border-width) solid var(--color-border); border-radius: var(--radius-md); }
+    .icon-pair { display: flex; align-items: center; gap: var(--space-4); color: var(--color-text); }
+    .i24 { width: var(--space-6); height: var(--space-6); }
+    .i16 { width: var(--space-4); height: var(--space-4); }
+    .icon-in-text { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-6); }
+
+    /* 07 Components */
+    .component { margin-top: var(--space-12); }
+    .component-head { display: flex; flex-direction: column; gap: var(--space-1); margin-bottom: var(--space-4); }
+    .component-head h3 { margin: 0; }
+    .component-head p { max-width: calc(var(--space-16) * 10); font-size: var(--text-small); line-height: var(--text-small-leading); color: var(--color-text-muted); }
+    .pair { display: grid; gap: var(--space-3); }
+    .pair.split { grid-template-columns: 1fr 1fr; }
+    .pocket {
+      display: flex; flex-direction: column; gap: var(--space-4); min-width: 0;
+      padding: var(--space-6);
+      background: var(--color-canvas); color: var(--color-text);
+      border: var(--border-width) solid var(--color-border); border-radius: var(--radius-lg);
+    }
+    .pocket-label { font-family: var(--font-mono); font-size: var(--text-caption); color: var(--color-text-muted); }
+    .states { display: flex; flex-wrap: wrap; gap: var(--space-6) var(--space-4); align-items: flex-start; }
+    .states.column { flex-direction: column; flex-wrap: nowrap; }
+    .state { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); min-width: 0; max-width: 100%; }
+    .state-label { font-family: var(--font-mono); font-size: var(--text-caption); line-height: var(--text-caption-leading); color: var(--color-text-muted); }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+      min-height: var(--book-control); padding: 0 var(--space-4);
+      border: var(--border-width) solid transparent; border-radius: var(--radius-md);
+      font-size: var(--text-small); font-weight: 600; line-height: 1; white-space: nowrap;
+      cursor: pointer; text-decoration: none;
+      transition: background-color var(--motion-fast) var(--ease), border-color var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease);
+    }
+    .btn svg { width: var(--space-4); height: var(--space-4); }
+    .btn:focus-visible, .btn.is-focus { outline: var(--border-width-strong) solid var(--color-focus); outline-offset: var(--border-width-strong); }
+    .btn-primary { background: var(--color-primary); color: var(--color-primary-text); }
+    .btn-primary:hover, .btn-primary.is-hover { background: var(--color-primary-hover); }
+    .btn-primary:active, .btn-primary.is-active { background: var(--color-primary-active); }
+    .btn-secondary { background: var(--color-surface-raised); color: var(--color-text); border-color: var(--color-border-strong); }
+    .btn-secondary:hover, .btn-secondary.is-hover { background: var(--color-surface); }
+    .btn-secondary:active, .btn-secondary.is-active { background: var(--color-border); }
+    .btn-ghost { background: transparent; color: var(--color-text); }
+    .btn-ghost:hover, .btn-ghost.is-hover { background: var(--color-surface); }
+    .btn-ghost:active, .btn-ghost.is-active { background: var(--color-border); }
+    .btn-danger { background: var(--color-danger); color: var(--color-text-inverse); }
+    .btn:disabled, .btn.is-disabled { background: var(--color-surface); color: var(--color-text-faint); border-color: var(--color-border); cursor: not-allowed; }
+    .btn-ghost:disabled, .btn-ghost.is-disabled { background: transparent; border-color: transparent; }
+    .btn.is-loading { cursor: progress; }
+    .btn-icon { width: var(--book-control); padding: 0; }
+    .spinner {
+      width: var(--space-4); height: var(--space-4); flex: none;
+      border: var(--border-width-strong) solid currentColor; border-right-color: transparent; border-radius: var(--radius-full);
+      animation: spin calc(var(--motion-slow) * 2) linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .field { display: flex; flex-direction: column; gap: var(--space-1); width: calc(var(--space-16) * 3.5); max-width: 100%; }
+    .field-label { font-size: var(--text-small); font-weight: 600; line-height: var(--text-small-leading); }
+    .field-hint { display: flex; align-items: center; gap: var(--space-1); font-size: var(--text-caption); line-height: var(--text-caption-leading); color: var(--color-text-muted); }
+    .field-hint svg { width: var(--space-4); height: var(--space-4); }
+    .input, .select select {
+      width: 100%; min-height: var(--book-control); padding: 0 var(--space-3);
+      background: var(--color-canvas); color: var(--color-text);
+      border: var(--border-width) solid var(--color-border-strong); border-radius: var(--radius-md);
+      font-size: var(--text-small);
+      transition: border-color var(--motion-fast) var(--ease), box-shadow var(--motion-fast) var(--ease);
+    }
+    .input::placeholder { color: var(--color-text-muted); opacity: 1; }
+    .input:hover, .input.is-hover, .select select:hover, .select select.is-hover { border-color: var(--color-text-muted); }
+    .input.is-active { border-color: var(--color-text); }
+    .input:focus-visible, .input.is-focus, .select select:focus-visible, .select select.is-focus { outline: none; border-color: var(--color-focus); box-shadow: 0 0 0 var(--border-width) var(--color-focus); }
+    .input:disabled, .input.is-disabled, .select select:disabled, .select select.is-disabled { background: var(--color-surface); color: var(--color-text-faint); border-color: var(--color-border); cursor: not-allowed; }
+    .input.is-error { border-color: var(--color-danger); }
+    .input.is-error:focus-visible { box-shadow: 0 0 0 var(--border-width) var(--color-danger); }
+    .field.is-error .field-hint { color: var(--color-danger); }
+    .select { position: relative; }
+    .select select { appearance: none; padding-right: var(--space-8); cursor: pointer; }
+    .select svg { position: absolute; right: var(--space-3); top: 50%; width: var(--space-4); height: var(--space-4); transform: translateY(-50%); pointer-events: none; color: var(--color-text-muted); }
+
+    .check { display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--book-target); font-size: var(--text-small); cursor: pointer; }
+    .checkbox {
+      appearance: none; margin: 0; flex: none;
+      display: grid; place-content: center;
+      width: calc(var(--space-4) + var(--space-1)); height: calc(var(--space-4) + var(--space-1));
+      background: var(--color-canvas);
+      border: var(--border-width) solid var(--color-border-strong); border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: background-color var(--motion-fast) var(--ease), border-color var(--motion-fast) var(--ease);
+    }
+    .checkbox::after {
+      content: ""; width: calc(var(--space-1) * 1.5); height: calc(var(--space-2) * 1.25);
+      margin-top: calc(var(--space-1) * -0.5);
+      border: solid var(--color-primary-text); border-width: 0 var(--border-width-strong) var(--border-width-strong) 0;
+      transform: rotate(45deg); opacity: 0;
+    }
+    .checkbox:hover, .checkbox.is-hover { border-color: var(--color-text-muted); }
+    .checkbox:checked { background: var(--color-primary); border-color: var(--color-primary); }
+    .checkbox:checked:hover, .checkbox:checked.is-hover { background: var(--color-primary-hover); border-color: var(--color-primary-hover); }
+    .checkbox:checked::after { opacity: 1; }
+    .checkbox:focus-visible, .checkbox.is-focus { outline: var(--border-width-strong) solid var(--color-focus); outline-offset: var(--border-width-strong); }
+    .checkbox:disabled { background: var(--color-surface); border-color: var(--color-border); cursor: not-allowed; }
+    .checkbox:disabled:checked { background: var(--color-border-strong); border-color: var(--color-border-strong); }
+    .check:has(:disabled) { color: var(--color-text-faint); cursor: not-allowed; }
+
+    .switch {
+      position: relative; flex: none;
+      width: var(--book-control); height: var(--space-6); padding: 0;
+      background: var(--color-text-faint); border: 0; border-radius: var(--radius-full);
+      cursor: pointer;
+      transition: background-color var(--motion-base) var(--ease);
+    }
+    .switch::after {
+      content: ""; position: absolute; top: var(--border-width-strong); left: var(--border-width-strong);
+      width: calc(var(--space-6) - var(--border-width-strong) * 2); height: calc(var(--space-6) - var(--border-width-strong) * 2);
+      background: var(--color-canvas); border-radius: var(--radius-full); box-shadow: var(--shadow-sm);
+      transition: transform var(--motion-base) var(--ease);
+    }
+    .switch:hover, .switch.is-hover { background: var(--color-text-muted); }
+    .switch[aria-checked="true"] { background: var(--color-primary); }
+    .switch[aria-checked="true"]:hover, .switch[aria-checked="true"].is-hover { background: var(--color-primary-hover); }
+    .switch[aria-checked="true"]::after { transform: translateX(var(--space-4)); }
+    .switch:focus-visible, .switch.is-focus { outline: var(--border-width-strong) solid var(--color-focus); outline-offset: var(--border-width-strong); }
+    .switch:disabled { background: var(--color-border); cursor: not-allowed; }
+    .switch:disabled::after { box-shadow: none; }
+
+    .appt {
+      display: flex; flex-direction: column; gap: var(--space-2);
+      width: calc(var(--space-16) * 3.75); max-width: 100%; padding: var(--space-4);
+      background: var(--color-surface-raised); color: var(--color-text);
+      border: var(--border-width) solid var(--color-border); border-radius: var(--radius-lg);
+      text-align: left; cursor: pointer;
+      transition: border-color var(--motion-fast) var(--ease), box-shadow var(--motion-fast) var(--ease);
+    }
+    .appt:hover, .appt.is-hover { border-color: var(--color-border-strong); box-shadow: var(--shadow-md); }
+    .appt.is-active { border-color: var(--color-primary); box-shadow: inset 0 0 0 var(--border-width) var(--color-primary); }
+    .appt:focus-visible, .appt.is-focus { outline: var(--border-width-strong) solid var(--color-focus); outline-offset: var(--border-width-strong); }
+    .appt-time { font-family: var(--font-mono); font-size: var(--text-caption); color: var(--color-text-muted); }
+    .appt-name { font-weight: 600; line-height: var(--text-small-leading); }
+    .appt-meta { font-size: var(--text-small); line-height: var(--text-small-leading); color: var(--color-text-muted); }
+    .badge {
+      display: inline-flex; align-items: center; gap: var(--space-1); align-self: flex-start;
+      padding: var(--space-1) var(--space-2); border-radius: var(--radius-full);
+      background: var(--color-primary-soft); color: var(--color-text);
+      font-size: var(--text-caption); font-weight: var(--text-caption-weight); line-height: var(--text-caption-leading);
+    }
+    .dot { width: var(--space-2); height: var(--space-2); border-radius: var(--radius-full); background: currentColor; flex: none; }
+    .status { display: inline-flex; align-items: center; gap: var(--space-2); white-space: nowrap; }
+    .status-ok .dot { background: var(--color-success); }
+    .status-wait .dot { background: var(--color-warning); }
+    .status-off .dot { background: var(--color-danger); }
+
+    .table tbody tr { transition: background-color var(--motion-fast) var(--ease); }
+    .table tbody tr:hover, .table tbody tr.is-hover { background: var(--color-surface); }
+    .table tbody tr.is-active { background: var(--color-primary-soft); box-shadow: inset var(--border-width-strong) 0 0 var(--color-primary); }
+    .table td.mono { font-size: var(--text-caption); color: var(--color-text-muted); }
+    .table th, .table td { white-space: nowrap; }
+
+    .tabs { display: flex; gap: var(--space-1); border-bottom: var(--border-width) solid var(--color-border); overflow-x: auto; }
+    .tab {
+      display: inline-flex; align-items: center; gap: var(--space-2);
+      min-height: var(--book-control); padding: 0 var(--space-3);
+      background: transparent; border: 0; border-radius: var(--radius-md) var(--radius-md) 0 0;
+      color: var(--color-text-muted); font-size: var(--text-small); font-weight: 500; white-space: nowrap;
+      cursor: pointer;
+      transition: background-color var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease);
+    }
+    .tab:hover, .tab.is-hover { color: var(--color-text); background: var(--color-surface); }
+    .tab[aria-selected="true"] { color: var(--color-text); font-weight: 600; box-shadow: inset 0 calc(var(--border-width-strong) * -1) 0 var(--color-primary); }
+    .tab:focus-visible, .tab.is-focus { outline: var(--border-width-strong) solid var(--color-focus); outline-offset: calc(var(--border-width-strong) * -1); }
+    .tab:disabled { color: var(--color-text-faint); cursor: not-allowed; background: transparent; }
+    .tab-panel { padding-top: var(--space-4); font-size: var(--text-small); color: var(--color-text-muted); }
+
+    .backdrop {
+      position: relative; display: grid; grid-template-columns: minmax(0, 1fr); place-items: center;
+      padding: var(--space-12) var(--space-4);
+      background: var(--color-surface); border-radius: var(--radius-md); overflow: hidden;
+    }
+    .backdrop::after { content: ""; position: absolute; inset: 0; background: var(--color-scrim); }
+    .backdrop-rows { position: absolute; inset: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3); }
+    .backdrop-rows span { height: var(--space-6); border-radius: var(--radius-sm); background: var(--color-surface-raised); }
+    .dialog {
+      position: relative; z-index: 1;
+      display: flex; flex-direction: column; gap: var(--space-3);
+      width: calc(var(--space-16) * 6.25); max-width: 100%; padding: var(--space-6);
+      background: var(--color-surface-raised); color: var(--color-text);
+      border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
+    }
+    .dialog h4 { font-family: var(--font-display); font-size: var(--text-heading); font-weight: var(--text-heading-weight); line-height: var(--text-heading-leading); }
+    .dialog p { font-size: var(--text-small); line-height: var(--text-small-leading); color: var(--color-text-muted); }
+    .dialog-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-3); }
+
+    .toast {
+      display: flex; gap: var(--space-3); align-items: flex-start;
+      width: calc(var(--space-16) * 5.5); max-width: 100%; padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
+      background: var(--color-surface-raised); color: var(--color-text);
+      border: var(--border-width) solid var(--color-border); border-radius: var(--radius-md); box-shadow: var(--shadow-md);
+      font-size: var(--text-small); line-height: var(--text-small-leading);
+    }
+    .toast > svg { width: var(--space-6); height: var(--space-6); margin-top: calc(var(--space-1) * -0.25); }
+    .toast-body { flex: 1; display: flex; flex-direction: column; gap: var(--space-1); padding-top: var(--border-width-strong); }
+    .toast-body span { color: var(--color-text-muted); }
+    .toast-success > svg { color: var(--color-success); }
+    .toast-warning > svg { color: var(--color-warning); }
+    .toast-danger > svg { color: var(--color-danger); }
+    .toast .btn-icon { width: var(--space-8); min-height: var(--space-8); margin: calc(var(--space-1) * -1) 0; }
+
+    .empty {
+      display: flex; flex-direction: column; align-items: center; gap: var(--space-3);
+      padding: var(--space-12) var(--space-6); text-align: center;
+      background: var(--color-surface); border: var(--border-width) dashed var(--color-border-strong); border-radius: var(--radius-lg);
+    }
+    .empty-icon { display: grid; place-items: center; width: var(--space-12); height: var(--space-12); border-radius: var(--radius-full); background: var(--color-primary-soft); color: var(--color-primary); }
+    .empty-icon svg { width: var(--space-6); height: var(--space-6); }
+    .empty h4 { font-family: var(--font-display); font-size: var(--text-heading); font-weight: var(--text-heading-weight); line-height: var(--text-heading-leading); }
+    .empty p { max-width: calc(var(--space-16) * 5); font-size: var(--text-small); line-height: var(--text-small-leading); color: var(--color-text-muted); }
+    .empty .btn { margin-top: var(--space-2); }
+
+    .appnav {
+      display: flex; align-items: center; gap: var(--space-4);
+      min-height: calc(var(--space-12) + var(--space-2)); padding: 0 var(--space-3) 0 var(--space-4);
+      background: var(--color-surface); color: var(--color-text);
+      border: var(--border-width) solid var(--color-border); border-radius: var(--radius-md);
+      overflow-x: auto;
+    }
+    .appnav .lockup { --mark-size: var(--space-6); flex: none; }
+    .appnav ul { display: flex; gap: var(--space-1); margin: 0; padding: 0; list-style: none; }
+    .appnav a {
+      display: inline-flex; align-items: center; min-height: var(--book-control); padding: 0 var(--space-3);
+      border-radius: var(--radius-md); color: var(--color-text-muted); text-decoration: none;
+      font-size: var(--text-small); font-weight: 500; white-space: nowrap;
+      transition: background-color var(--motion-fast) var(--ease), color var(--motion-fast) var(--ease);
+    }
+    .appnav a:hover, .appnav a.is-hover { background: var(--color-surface-raised); color: var(--color-text); }
+    .appnav a[aria-current="page"] { background: var(--color-primary-soft); color: var(--color-text); font-weight: 600; }
+    .appnav a:focus-visible, .appnav a.is-focus { outline: var(--border-width-strong) solid var(--color-focus); outline-offset: calc(var(--border-width-strong) * -1); }
+    .avatar { display: grid; place-items: center; flex: none; margin-left: auto; width: var(--space-8); height: var(--space-8); border-radius: var(--radius-full); background: var(--color-primary); color: var(--color-primary-text); font-size: var(--text-caption); font-weight: 600; }
+
+    /* 08 Motion */
+    .motion-tokens { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); }
+    .motion-tokens .tile { display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-4); }
+    .motion-tokens code { font-size: var(--text-small); font-weight: 600; }
+    .motion-tokens span { font-family: var(--font-mono); font-size: var(--text-caption); color: var(--color-text-muted); overflow-wrap: anywhere; }
+    .demos { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4); }
+    .demo { display: flex; flex-direction: column; gap: var(--space-3); }
+    .demo-stage { display: grid; place-items: center; height: calc(var(--space-16) * 2.5); background: var(--color-surface); border: var(--border-width) solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden; }
+    .demo p { font-size: var(--text-small); line-height: var(--text-small-leading); color: var(--color-text-muted); }
+    .demo-card { width: calc(var(--space-16) * 2.5); padding: var(--space-3); background: var(--color-surface-raised); border: var(--border-width) solid var(--color-border); border-radius: var(--radius-md); box-shadow: var(--shadow-md); }
+    .demo-card span { display: block; height: var(--space-2); border-radius: var(--radius-full); background: var(--color-border); }
+    .demo-card span + span { margin-top: var(--space-2); width: 60%; }
+    .demo-card span:first-child { background: var(--color-primary); width: 40%; }
+    .fade-rise { animation: fade-rise calc(var(--motion-slow) * 8) var(--ease) infinite; }
+    @keyframes fade-rise {
+      0% { opacity: 0; transform: translateY(var(--space-3)); }
+      15%, 80% { opacity: 1; transform: none; }
+      95%, 100% { opacity: 0; transform: none; }
+    }
+    .expand { transform-origin: top; animation: expand calc(var(--motion-base) * 14) var(--ease) infinite; }
+    .expand span:nth-child(n + 2) { animation: expand-rows calc(var(--motion-base) * 14) var(--ease) infinite; }
+    @keyframes expand {
+      0%, 10% { transform: scaleY(0.45); }
+      25%, 75% { transform: none; }
+      90%, 100% { transform: scaleY(0.45); }
+    }
+    @keyframes expand-rows {
+      0%, 15% { opacity: 0; }
+      30%, 70% { opacity: 1; }
+      85%, 100% { opacity: 0; }
+    }
+    .demo-spinner { width: var(--space-8); height: var(--space-8); color: var(--color-primary); border-width: calc(var(--border-width-strong) * 1.5); }
+
+    /* 09 Voice */
+    .tone { display: flex; flex-direction: column; gap: var(--space-3); padding: 0; list-style: none; }
+    .tone li { max-width: calc(var(--space-16) * 11); padding-left: var(--space-4); border-left: var(--border-width-strong) solid var(--color-primary); font-family: var(--font-display); font-size: calc(var(--text-heading) * 0.9); line-height: var(--text-heading-leading); }
+    .dodont { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3) var(--space-4); padding: 0; margin: 0; }
+    .dodont-head { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-small); font-weight: 600; }
+    .dodont-head svg { width: var(--space-4); height: var(--space-4); }
+    .dodont-head.do svg { color: var(--color-success); }
+    .dodont-head.dont svg { color: var(--color-danger); }
+    .dodont p { padding: var(--space-4); background: var(--color-surface); border-radius: var(--radius-md); font-size: var(--text-small); line-height: var(--text-small-leading); }
+    .dodont p.do { box-shadow: inset var(--border-width-strong) 0 0 var(--color-success); }
+    .dodont p.dont { box-shadow: inset var(--border-width-strong) 0 0 var(--color-danger); color: var(--color-text-muted); }
+
+    /* 10 Responsive */
+    .ruler { position: relative; height: var(--space-12); margin: var(--space-8) 0 var(--space-6); border-bottom: var(--border-width-strong) solid var(--color-border-strong); }
+    .ruler span { position: absolute; bottom: calc(var(--border-width-strong) * -1); display: flex; flex-direction: column; align-items: center; gap: var(--space-1); transform: translateX(-50%); font-family: var(--font-mono); font-size: var(--text-caption); color: var(--color-text-muted); }
+    .ruler span::after { content: ""; width: var(--border-width-strong); height: var(--space-4); background: var(--color-primary); }
+    .breakpoints { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4); padding: 0; list-style: none; }
+    .breakpoints li { display: flex; flex-direction: column; gap: var(--space-2); }
+    .breakpoints strong { font-family: var(--font-mono); font-size: var(--text-small); }
+    .breakpoints p { font-size: var(--text-small); line-height: var(--text-small-leading); color: var(--color-text-muted); }
+    .rules { display: flex; flex-direction: column; padding: 0; list-style: none; border-top: var(--border-width) solid var(--color-border); }
+    .rules li { display: grid; grid-template-columns: var(--space-6) 1fr; gap: var(--space-3); align-items: start; padding: var(--space-4) 0; border-bottom: var(--border-width) solid var(--color-border); font-size: var(--text-small); line-height: var(--text-small-leading); }
+    .rules svg { width: var(--space-6); height: var(--space-6); color: var(--color-primary); }
+    .target-demo { display: inline-grid; place-items: center; width: var(--book-target); height: var(--book-target); border: var(--border-width) dashed var(--color-accent); border-radius: var(--radius-sm); vertical-align: middle; }
+
+    .book-foot { margin-top: var(--space-16); padding-top: var(--space-8); border-top: var(--border-width) solid var(--color-border); font-size: var(--text-caption); color: var(--color-text-muted); }
+
+    [data-theme-toggle] {
+      position: fixed; right: var(--space-4); bottom: var(--space-4); z-index: 6;
+      display: inline-flex; align-items: center; gap: var(--space-2);
+      min-height: var(--book-control); padding: 0 var(--space-4);
+      background: var(--color-surface-raised); color: var(--color-text);
+      border: var(--border-width) solid var(--color-border-strong); border-radius: var(--radius-full);
+      box-shadow: var(--shadow-md);
+      font-size: var(--text-small); font-weight: 600; cursor: pointer;
+    }
+    [data-theme-toggle] svg { width: var(--space-4); height: var(--space-4); }
+    [data-theme-toggle]:hover { background: var(--color-surface); }
+
+    @media (max-width: 75rem) {
+      .roles { grid-template-columns: 1fr 1fr; }
+      .role-primary { grid-column: 1 / -1; }
+      .motion-tokens { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 56.25rem) {
+      html { scroll-padding-top: calc(var(--space-16) + var(--space-6)); }
+      [data-sidebar] {
+        position: sticky; bottom: auto; width: auto;
+        flex-direction: row; align-items: center; gap: var(--space-3);
+        padding: var(--space-2) 0 var(--space-2) var(--space-4);
+        border-right: 0; border-bottom: var(--border-width) solid var(--color-border);
+        overflow: visible;
+      }
+      .sidebar-brand { padding: 0; flex: none; }
+      .sidebar-brand .wordmark, .sidebar-title, .sidebar-foot { display: none; }
+      .sidebar-list { flex: 1; flex-direction: row; overflow-x: auto; scrollbar-width: none; padding-right: var(--space-4); }
+      .sidebar-list::-webkit-scrollbar { display: none; }
+      .sidebar-list a { white-space: nowrap; }
+      .book { margin-left: 0; padding: var(--space-8) var(--space-6) calc(var(--space-16) * 2); }
+      .demos, .faces, .shadows { grid-template-columns: 1fr; }
+      .pair.split { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 40rem) {
+      .book { padding: var(--space-6) var(--space-4) calc(var(--space-16) * 2); }
+      .cover h1 { font-size: var(--text-title); line-height: var(--text-title-leading); }
+      .chapter { padding-top: var(--space-12); }
+      .chapter + .chapter { margin-top: var(--space-12); }
+      .feel, .grounds, .roles, .borders, .breakpoints, .dodont, .motion-tokens { grid-template-columns: 1fr; }
+      .scale-row { grid-template-columns: 1fr; gap: var(--space-2); }
+      .t-display { font-size: var(--text-title); }
+      .pocket { padding: var(--space-4); }
+      .stage .lockup, .clearspace { --mark-size: var(--space-12); }
+      .swatches { grid-template-columns: 1fr 1fr; }
+      .stage { min-height: calc(var(--space-16) * 2.5); }
+      .dodont-head { display: none; }
+      .dodont p::before { display: block; margin-bottom: var(--space-1); font-size: var(--text-caption); font-weight: 600; color: var(--color-text-muted); }
+      .dodont p.do::before { content: "Do"; }
+      .dodont p.dont::before { content: "Don't"; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+    </style>
+  </head>
+  <body>
+    <svg hidden aria-hidden="true">
+      <symbol id="mark" viewBox="0 0 100 100"><path class="mark-shape" d="M100 50L100 51.79L100 55.03L99.99 59.13L99.93 63.81L99.75 68.86L99.32 74.05L98.48 79.18L97.07 84.02L94.95 88.37L92.04 92.04L88.37 94.95L84.02 97.07L79.18 98.48L74.05 99.32L68.86 99.75L63.81 99.93L59.13 99.99L55.03 100L51.79 100L50 100L48.21 100L44.97 100L40.87 99.99L36.19 99.93L31.14 99.75L25.95 99.32L20.82 98.48L15.98 97.07L11.63 94.95L7.96 92.04L5.05 88.37L2.93 84.02L1.52 79.18L0.68 74.05L0.25 68.86L0.07 63.81L0.01 59.13L0 55.03L0 51.79L0 50L0 48.21L0 44.97L0.01 40.87L0.07 36.19L0.25 31.14L0.68 25.95L1.52 20.82L2.93 15.98L5.05 11.63L7.96 7.96L11.63 5.05L15.98 2.93L20.82 1.52L25.95 0.68L31.14 0.25L36.19 0.07L40.87 0.01L44.97 0L48.21 0L50 0L51.79 0L55.03 0L59.13 0.01L63.81 0.07L68.86 0.25L74.05 0.68L79.18 1.52L84.02 2.93L88.37 5.05L92.04 7.96L94.95 11.63L97.07 15.98L98.48 20.82L99.32 25.95L99.75 31.14L99.93 36.19L99.99 40.87L100 44.97L100 48.21Z" /></symbol>
+      <symbol id="i-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5" /><path d="M3.5 10h17M8 3v4M16 3v4" /></symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></symbol>
+      <symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.5" /><path d="M5 19.5c1.2-3.3 3.9-5 7-5s5.8 1.7 7 5" /></symbol>
+      <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5" /><path d="m16 16 4 4" /></symbol>
+      <symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 11a5.5 5.5 0 0 1 11 0v4.5l1.5 2.5h-14l1.5-2.5z" /><path d="M10 21a2.2 2.2 0 0 0 4 0" /></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5" /></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14" /></symbol>
+      <symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></symbol>
+      <symbol id="i-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6" /></symbol>
+      <symbol id="i-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" /></symbol>
+      <symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5" /><path d="M12 11v5M12 8v.01" /></symbol>
+      <symbol id="i-ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5" /><path d="m8.5 12.5 2.5 2.5 4.5-5" /></symbol>
+      <symbol id="i-warn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.5 3.5 19h17z" /><path d="M12 10v4M12 16.5v.01" /></symbol>
+      <symbol id="i-error" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5" /><path d="m9 9 6 6M15 9l-6 6" /></symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14.5A7.5 7.5 0 0 1 9.5 5a7.5 7.5 0 1 0 9.5 9.5z" /></symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4" /><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4" /></symbol>
+    </svg>
+
+    <a class="skip" href="#foundations">Skip to the guidelines</a>
+
+    <nav data-sidebar aria-label="Chapters">
+      <a class="sidebar-brand" href="#top">
+        <svg class="mark" aria-hidden="true"><use href="#mark" /></svg>
+        <span><span class="wordmark">Sample</span><span class="sidebar-title">Design guidelines</span></span>
+      </a>
+      <ol class="sidebar-list">
+        <li><a href="#foundations"><span class="nn">01</span>Foundations</a></li>
+        <li><a href="#mark"><span class="nn">02</span>Mark</a></li>
+        <li><a href="#color"><span class="nn">03</span>Color</a></li>
+        <li><a href="#typography"><span class="nn">04</span>Typography</a></li>
+        <li><a href="#spacing"><span class="nn">05</span>Spacing</a></li>
+        <li><a href="#iconography"><span class="nn">06</span>Iconography</a></li>
+        <li><a href="#components"><span class="nn">07</span>Components</a></li>
+        <li><a href="#motion"><span class="nn">08</span>Motion</a></li>
+        <li><a href="#voice"><span class="nn">09</span>Voice</a></li>
+        <li><a href="#responsive"><span class="nn">10</span>Responsive</a></li>
+      </ol>
+      <p class="sidebar-foot">The tokens live in the head of this file. Change them there and every chapter follows.</p>
+    </nav>
+
+    <main class="book">
+      <div class="book-inner">
+        <header class="cover" id="top">
+          <div class="lockup">
+            <svg class="mark" aria-hidden="true"><use href="#mark" /></svg>
+            <span class="wordmark">Sample</span>
+          </div>
+          <h1>Design guidelines</h1>
+          <p class="lede" data-fill="cover.lede">How Sample looks, reads and moves. One file kept next to the code, so every screen we ship starts from the same decisions.</p>
+          <ul class="cover-meta">
+            <li class="chip"><svg aria-hidden="true"><use href="#i-sun" /></svg>Light and dark</li>
+            <li class="chip"><svg aria-hidden="true"><use href="#i-check" /></svg>Contrast measured on load</li>
+            <li class="chip"><svg aria-hidden="true"><use href="#i-calendar" /></svg>Ten chapters</li>
+          </ul>
+        </header>
+
+        <section id="foundations" class="chapter" data-chapter="01" aria-labelledby="foundations-title">
+          <header class="chapter-head"><span class="chapter-nn">01</span><h2 id="foundations-title">Foundations</h2></header>
+          <p class="lede" data-fill="foundations.lede">What Sample is, how it should feel, and the three rules we reach for when two good ideas disagree.</p>
+
+          <h3>The product</h3>
+          <p class="product" data-fill="foundations.product">Sample is the booking calendar for independent clinics. It turns a busy week of appointments into one calm screen a receptionist can read at a glance.</p>
+
+          <h3>The feel</h3>
+          <ul class="feel">
+            <li data-fill="foundations.feel-1">Calm</li>
+            <li data-fill="foundations.feel-2">Exact</li>
+            <li data-fill="foundations.feel-3">Warm</li>
+          </ul>
+          <p class="note" data-fill="foundations.feel">Calm, because the people using it are busy. Exact, because a wrong time costs a patient a visit. Warm, because a clinic is a place of care.</p>
+
+          <h3>Principles that decide ties</h3>
+          <ol class="principles grid">
+            <li class="tile">
+              <h4 data-fill="foundations.principle-1">The schedule is the hero</h4>
+              <p data-fill="foundations.principle-1-why">Every screen gives the week the most room. Menus and settings step back until someone needs them.</p>
+            </li>
+            <li class="tile">
+              <h4 data-fill="foundations.principle-2">Clear before clever</h4>
+              <p data-fill="foundations.principle-2-why">A plain label beats a smart icon. If a control needs a tooltip to be understood, it needs a better word.</p>
+            </li>
+            <li class="tile">
+              <h4 data-fill="foundations.principle-3">Say it once</h4>
+              <p data-fill="foundations.principle-3-why">One primary action per screen, one way to do each thing, one name for each idea across the product.</p>
+            </li>
+          </ol>
+        </section>
+
+        <section id="mark" class="chapter" data-chapter="02" aria-labelledby="mark-title">
+          <header class="chapter-head"><span class="chapter-nn">02</span><h2 id="mark-title">Mark</h2></header>
+          <p class="lede" data-fill="mark.lede">A soft square that holds the week, set beside the name. It signs the product; it never decorates it.</p>
+          <div class="callout" role="note">
+            <svg aria-hidden="true"><use href="#i-info" /></svg>
+            <p>This mark is a placeholder. Replace it with your own and keep the sizes and clear space.</p>
+          </div>
+
+          <h3>The lockup</h3>
+          <div class="stage">
+            <div class="lockup">
+              <svg class="mark" viewBox="0 0 100 100" role="img" aria-label="Sample mark"><path class="mark-shape" d="M100 50L100 51.79L100 55.03L99.99 59.13L99.93 63.81L99.75 68.86L99.32 74.05L98.48 79.18L97.07 84.02L94.95 88.37L92.04 92.04L88.37 94.95L84.02 97.07L79.18 98.48L74.05 99.32L68.86 99.75L63.81 99.93L59.13 99.99L55.03 100L51.79 100L50 100L48.21 100L44.97 100L40.87 99.99L36.19 99.93L31.14 99.75L25.95 99.32L20.82 98.48L15.98 97.07L11.63 94.95L7.96 92.04L5.05 88.37L2.93 84.02L1.52 79.18L0.68 74.05L0.25 68.86L0.07 63.81L0.01 59.13L0 55.03L0 51.79L0 50L0 48.21L0 44.97L0.01 40.87L0.07 36.19L0.25 31.14L0.68 25.95L1.52 20.82L2.93 15.98L5.05 11.63L7.96 7.96L11.63 5.05L15.98 2.93L20.82 1.52L25.95 0.68L31.14 0.25L36.19 0.07L40.87 0.01L44.97 0L48.21 0L50 0L51.79 0L55.03 0L59.13 0.01L63.81 0.07L68.86 0.25L74.05 0.68L79.18 1.52L84.02 2.93L88.37 5.05L92.04 7.96L94.95 11.63L97.07 15.98L98.48 20.82L99.32 25.95L99.75 31.14L99.93 36.19L99.99 40.87L100 44.97L100 48.21Z" /></svg>
+              <span class="wordmark" data-fill="mark.wordmark">Sample</span>
+            </div>
+          </div>
+          <p class="note" data-fill="mark.lockup">The mark sits left of the wordmark, centered on its height. The gap between them is a third of the mark's width and never changes.</p>
+
+          <h3>Sizes</h3>
+          <div class="sizes">
+            <figure><div class="lockup" style="--mark-size: var(--space-4)"><svg class="mark" aria-hidden="true"><use href="#mark" /></svg></div><figcaption class="caption">16 px · favicon</figcaption></figure>
+            <figure><div class="lockup" style="--mark-size: var(--space-8)"><svg class="mark" aria-hidden="true"><use href="#mark" /></svg><span class="wordmark">Sample</span></div><figcaption class="caption">32 px · app bar</figcaption></figure>
+            <figure><div class="lockup" style="--mark-size: var(--space-16)"><svg class="mark" aria-hidden="true"><use href="#mark" /></svg><span class="wordmark">Sample</span></div><figcaption class="caption">64 px · sign in</figcaption></figure>
+            <figure><div class="lockup" style="--mark-size: calc(var(--space-16) * 2)"><svg class="mark" aria-hidden="true"><use href="#mark" /></svg></div><figcaption class="caption">128 px · app icon</figcaption></figure>
+          </div>
+          <p class="note" data-fill="mark.sizes">Below 32 px the mark stands alone. The full lockup starts at 32 px, where the wordmark is still crisp.</p>
+
+          <h3>Backgrounds</h3>
+          <div class="grounds">
+            <div class="ground" data-theme="light">
+              <div class="lockup"><svg class="mark" aria-hidden="true"><use href="#mark" /></svg><span class="wordmark">Sample</span></div>
+              <span class="caption">On light</span>
+            </div>
+            <div class="ground" data-theme="dark">
+              <div class="lockup"><svg class="mark" aria-hidden="true"><use href="#mark" /></svg><span class="wordmark">Sample</span></div>
+              <span class="caption">On dark</span>
+            </div>
+            <div class="ground on-primary">
+              <div class="lockup"><svg class="mark" aria-hidden="true"><use href="#mark" /></svg><span class="wordmark">Sample</span></div>
+              <span class="caption">On primary</span>
+            </div>
+          </div>
+          <p class="note" data-fill="mark.backgrounds">On the primary color the mark and the wordmark turn to the primary text color. Never place the mark on a photo or a pattern.</p>
+
+          <h3>Clear space</h3>
+          <div class="clearspace-row">
+            <div class="clearspace"><div class="lockup"><svg class="mark" aria-hidden="true"><use href="#mark" /></svg><span class="wordmark">Sample</span></div></div>
+            <p class="note" data-fill="mark.clear-space">Keep clear space equal to the mark's corner radius, a quarter of its width, on every side. Nothing enters the dashed line: no text, no edge, no other logo.</p>
+          </div>
+        </section>
+
+        <section id="color" class="chapter" data-chapter="03" aria-labelledby="color-title">
+          <header class="chapter-head"><span class="chapter-nn">03</span><h2 id="color-title">Color</h2></header>
+          <p class="lede" data-fill="color.lede">A warm paper neutral, one deep teal for action and a terracotta accent used sparingly. Every color is a token, and every token has a dark value.</p>
+
+          <h3>Roles</h3>
+          <div class="roles">
+            <div class="role role-primary">
+              <div class="role-fill">--color-primary</div>
+              <div class="role-body"><h4>Primary</h4><p data-fill="color.primary-role">Teal is for the one action that matters on a screen and for the current place in the app. If everything is teal, nothing is.</p></div>
+            </div>
+            <div class="role role-accent">
+              <div class="role-fill">--color-accent</div>
+              <div class="role-body"><h4>Accent</h4><p data-fill="color.accent-role">Terracotta marks what is new or needs a look today. Never a button, never a status.</p></div>
+            </div>
+            <div class="role role-neutral">
+              <div class="role-fill">--color-surface</div>
+              <div class="role-body"><h4>Neutrals</h4><p data-fill="color.neutral-role">Warm paper greys carry the page, so the schedule reads before the chrome around it.</p></div>
+            </div>
+          </div>
+
+          <h3>Tokens</h3>
+          <p class="note">Each chip shows the light value on the left and the dark value on the right, read from the tokens in this file.</p>
+          <div class="swatch-groups" data-swatches></div>
+          <noscript><p class="note">Turn on JavaScript to see the swatches. The values are in the tokens block in the head of this file.</p></noscript>
+
+          <h3>Contrast, measured</h3>
+          <p class="note">Measured from the tokens when this page loads, with the WCAG 2 formula. Text needs 4.5:1; large text, icons and focus rings need 3:1.</p>
+          <div class="table-wrap">
+            <table class="data" data-contrast data-pairs="color-text:color-canvas:4.5,color-text:color-surface:4.5,color-text:color-surface-raised:4.5,color-text-muted:color-surface:4.5,color-text-faint:color-surface:3,color-primary-text:color-primary:4.5,color-text-inverse:color-primary:4.5,color-danger:color-surface:3,color-success:color-surface:3,color-warning:color-surface:3,color-focus:color-canvas:3">
+              <thead><tr><th scope="col">Pair</th><th scope="col">Needs</th><th scope="col">Light</th><th scope="col">Dark</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="typography" class="chapter" data-chapter="04" aria-labelledby="typography-title">
+          <header class="chapter-head"><span class="chapter-nn">04</span><h2 id="typography-title">Typography</h2></header>
+          <p class="lede" data-fill="typography.lede">A grotesque with a little warmth for headlines, a quiet sans for everything people read and click, and a mono for times and codes.</p>
+
+          <h3>Faces</h3>
+          <div class="faces">
+            <div class="tile face face-display">
+              <span class="face-aa" aria-hidden="true">Aa</span>
+              <span class="face-name" data-face="display"></span>
+              <p data-fill="typography.display-role">Display. Page titles, empty states and the cover of a report. Never below 22 px.</p>
+            </div>
+            <div class="tile face face-body">
+              <span class="face-aa" aria-hidden="true">Aa</span>
+              <span class="face-name" data-face="body"></span>
+              <p data-fill="typography.body-role">Body. Labels, tables, forms and messages: every word a person reads or clicks.</p>
+            </div>
+            <div class="tile face face-mono">
+              <span class="face-aa" aria-hidden="true">Aa</span>
+              <span class="face-name" data-face="mono"></span>
+              <p data-fill="typography.mono-role">Mono. Times, durations and booking codes, anything that must line up in a column.</p>
+            </div>
+          </div>
+
+          <h3>Scale</h3>
+          <div class="scale">
+            <div class="scale-row"><div class="scale-meta"><code>text-display</code><span class="caption" data-type-meta="display"></span></div><p class="t-display" data-fill="typography.sample-display">A calm week, at a glance</p></div>
+            <div class="scale-row"><div class="scale-meta"><code>text-title</code><span class="caption" data-type-meta="title"></span></div><p class="t-title" data-fill="typography.sample-title">Today at the clinic</p></div>
+            <div class="scale-row"><div class="scale-meta"><code>text-heading</code><span class="caption" data-type-meta="heading"></span></div><p class="t-heading" data-fill="typography.sample-heading">Next appointment in 20 minutes</p></div>
+            <div class="scale-row"><div class="scale-meta"><code>text-body</code><span class="caption" data-type-meta="body"></span></div><p class="t-body" data-fill="typography.sample-body">Dr. Rossi has two open slots this afternoon. Drag a booking to move it.</p></div>
+            <div class="scale-row"><div class="scale-meta"><code>text-small</code><span class="caption" data-type-meta="small"></span></div><p class="t-small" data-fill="typography.sample-small">Reminders go out 24 hours before each visit.</p></div>
+            <div class="scale-row"><div class="scale-meta"><code>text-caption</code><span class="caption" data-type-meta="caption"></span></div><p class="t-caption" data-fill="typography.sample-caption">Updated two minutes ago</p></div>
+          </div>
+
+          <h3>Reading</h3>
+          <p class="t-body paragraph" data-fill="typography.paragraph">Most of what Sample says is short: a name, a time, a room. When it has to say more, it says it in plain sentences that a tired receptionist can read at the end of a long day. Lines stay under seventy characters, paragraphs under four lines, and numbers always use the mono face so they line up.</p>
+        </section>
+
+        <section id="spacing" class="chapter" data-chapter="05" aria-labelledby="spacing-title">
+          <header class="chapter-head"><span class="chapter-nn">05</span><h2 id="spacing-title">Spacing</h2></header>
+          <p class="lede" data-fill="spacing.lede">Space steps in fours: tight inside a control, generous between groups, so the week breathes without wasting a row.</p>
+
+          <h3>Scale</h3>
+          <ul class="space-list">
+            <li><code>space-1</code><span class="space-value" data-token-value="space-1"></span><span class="space-bar" style="width: var(--space-1)"></span></li>
+            <li><code>space-2</code><span class="space-value" data-token-value="space-2"></span><span class="space-bar" style="width: var(--space-2)"></span></li>
+            <li><code>space-3</code><span class="space-value" data-token-value="space-3"></span><span class="space-bar" style="width: var(--space-3)"></span></li>
+            <li><code>space-4</code><span class="space-value" data-token-value="space-4"></span><span class="space-bar" style="width: var(--space-4)"></span></li>
+            <li><code>space-6</code><span class="space-value" data-token-value="space-6"></span><span class="space-bar" style="width: var(--space-6)"></span></li>
+            <li><code>space-8</code><span class="space-value" data-token-value="space-8"></span><span class="space-bar" style="width: var(--space-8)"></span></li>
+            <li><code>space-12</code><span class="space-value" data-token-value="space-12"></span><span class="space-bar" style="width: var(--space-12)"></span></li>
+            <li><code>space-16</code><span class="space-value" data-token-value="space-16"></span><span class="space-bar" style="width: var(--space-16)"></span></li>
+          </ul>
+          <p class="note" data-fill="spacing.rule">Space inside a control comes from steps 1 to 3, between controls from 4 and 6, between sections from 8 up. Never a number off the scale.</p>
+
+          <h3>Radii</h3>
+          <div class="shapes">
+            <figure><div class="radius-box" style="border-radius: var(--radius-sm)"></div><figcaption><code>radius-sm</code> <span data-token-value="radius-sm"></span></figcaption></figure>
+            <figure><div class="radius-box" style="border-radius: var(--radius-md)"></div><figcaption><code>radius-md</code> <span data-token-value="radius-md"></span></figcaption></figure>
+            <figure><div class="radius-box" style="border-radius: var(--radius-lg)"></div><figcaption><code>radius-lg</code> <span data-token-value="radius-lg"></span></figcaption></figure>
+            <figure><div class="radius-box" style="border-radius: var(--radius-full)"></div><figcaption><code>radius-full</code></figcaption></figure>
+          </div>
+          <p class="note" data-fill="spacing.radii">Small for checkboxes and badges, medium for buttons and fields, large for cards and dialogs. Full is for switches and avatars only.</p>
+
+          <h3>Elevation</h3>
+          <div class="shadows">
+            <div class="shadow-card" style="box-shadow: var(--shadow-sm)"><code>shadow-sm</code><span>Switch thumbs</span></div>
+            <div class="shadow-card" style="box-shadow: var(--shadow-md)"><code>shadow-md</code><span>Menus, toasts, a hovered card</span></div>
+            <div class="shadow-card" style="box-shadow: var(--shadow-lg)"><code>shadow-lg</code><span>Dialogs</span></div>
+          </div>
+          <p class="note" data-fill="spacing.shadows">A shadow means something floats above the page. Cards sit flat on a hairline until a pointer lifts them.</p>
+
+          <h3>Borders</h3>
+          <div class="borders">
+            <div class="border-sample"><div class="border-line" style="border-top-width: var(--border-width); border-top-color: var(--color-border)"></div><span><code>border-width</code> on <code>color-border</code>: dividers, cards, tables</span></div>
+            <div class="border-sample"><div class="border-line" style="border-top-width: var(--border-width-strong); border-top-color: var(--color-primary)"></div><span><code>border-width-strong</code>: focus rings, the selected tab, the current row</span></div>
+          </div>
+          <p class="note" data-fill="spacing.borders">A hairline separates. A thicker line means focus or selection, and nothing else.</p>
+        </section>
+
+        <section id="iconography" class="chapter" data-chapter="06" aria-labelledby="iconography-title">
+          <header class="chapter-head"><span class="chapter-nn">06</span><h2 id="iconography-title">Iconography</h2></header>
+          <p class="lede" data-fill="iconography.lede">Line icons on a 24 px grid, drawn with round ends, sized with the text they sit beside.</p>
+
+          <h3>The set</h3>
+          <ul class="icons">
+            <li><span class="icon-pair"><svg class="i24" aria-hidden="true"><use href="#i-calendar" /></svg><svg class="i16" aria-hidden="true"><use href="#i-calendar" /></svg></span><span class="caption">Calendar</span></li>
+            <li><span class="icon-pair"><svg class="i24" aria-hidden="true"><use href="#i-clock" /></svg><svg class="i16" aria-hidden="true"><use href="#i-clock" /></svg></span><span class="caption">Time</span></li>
+            <li><span class="icon-pair"><svg class="i24" aria-hidden="true"><use href="#i-user" /></svg><svg class="i16" aria-hidden="true"><use href="#i-user" /></svg></span><span class="caption">Patient</span></li>
+            <li><span class="icon-pair"><svg class="i24" aria-hidden="true"><use href="#i-search" /></svg><svg class="i16" aria-hidden="true"><use href="#i-search" /></svg></span><span class="caption">Search</span></li>
+            <li><span class="icon-pair"><svg class="i24" aria-hidden="true"><use href="#i-bell" /></svg><svg class="i16" aria-hidden="true"><use href="#i-bell" /></svg></span><span class="caption">Reminder</span></li>
+            <li><span class="icon-pair"><svg class="i24" aria-hidden="true"><use href="#i-check" /></svg><svg class="i16" aria-hidden="true"><use href="#i-check" /></svg></span><span class="caption">Confirm</span></li>
+            <li><span class="icon-pair"><svg class="i24" aria-hidden="true"><use href="#i-plus" /></svg><svg class="i16" aria-hidden="true"><use href="#i-plus" /></svg></span><span class="caption">Add</span></li>
+            <li><span class="icon-pair"><svg class="i24" aria-hidden="true"><use href="#i-arrow" /></svg><svg class="i16" aria-hidden="true"><use href="#i-arrow" /></svg></span><span class="caption">Next</span></li>
+          </ul>
+          <p class="note" data-fill="iconography.rule">Stroke 1.75 at 24 px, round caps and joins, no fills. Icons take the color of the text beside them and always come with a word, except in a toolbar where the word is the accessible label.</p>
+          <div class="icon-in-text">
+            <span class="chip"><svg aria-hidden="true"><use href="#i-clock" /></svg>09:30, 30 minutes</span>
+            <span class="chip"><svg aria-hidden="true"><use href="#i-bell" /></svg>Reminder sent</span>
+            <span class="chip"><svg aria-hidden="true"><use href="#i-user" /></svg>New patient</span>
+          </div>
+        </section>
+
+        <section id="components" class="chapter" data-chapter="07" aria-labelledby="components-title">
+          <header class="chapter-head"><span class="chapter-nn">07</span><h2 id="components-title">Components</h2></header>
+          <p class="lede" data-fill="components.lede">Every control is built from the tokens above. Each one shows its states at rest, in light and in dark, so no state is designed in a hurry later.</p>
+
+          <div class="component">
+            <div class="component-head"><h3>Primary button</h3><p data-fill="components.button-primary">The one action that moves a booking forward. One per screen, labelled with a verb and its object.</p></div>
+            <div class="pair">
+              <div class="pocket" data-theme="light" data-component="button-primary" data-tokens="backgroundColor=primary textColor=primary-text rounded=md">
+                <span class="pocket-label">Light</span>
+                <div class="states">
+                  <div class="state" data-state="default"><button type="button" class="btn btn-primary">Book appointment</button><span class="state-label">Default</span></div>
+                  <div class="state" data-state="hover"><button type="button" class="btn btn-primary is-hover">Book appointment</button><span class="state-label">Hover</span></div>
+                  <div class="state" data-state="active"><button type="button" class="btn btn-primary is-active">Book appointment</button><span class="state-label">Pressed</span></div>
+                  <div class="state" data-state="focus"><button type="button" class="btn btn-primary is-focus">Book appointment</button><span class="state-label">Focus</span></div>
+                  <div class="state" data-state="disabled"><button type="button" class="btn btn-primary is-disabled" disabled>Book appointment</button><span class="state-label">Disabled</span></div>
+                  <div class="state" data-state="loading"><button type="button" class="btn btn-primary is-loading" aria-busy="true" aria-disabled="true"><span class="spinner" aria-hidden="true"></span>Booking</button><span class="state-label">Loading</span></div>
+                </div>
+              </div>
+              <div class="pocket" data-theme="dark" inert>
+                <span class="pocket-label">Dark</span>
+                <div class="states">
+                  <div class="state"><button type="button" class="btn btn-primary">Book appointment</button><span class="state-label">Default</span></div>
+                  <div class="state"><button type="button" class="btn btn-primary is-hover">Book appointment</button><span class="state-label">Hover</span></div>
+                  <div class="state"><button type="button" class="btn btn-primary is-active">Book appointment</button><span class="state-label">Pressed</span></div>
+                  <div class="state"><button type="button" class="btn btn-primary is-focus">Book appointment</button><span class="state-label">Focus</span></div>
+                  <div class="state"><button type="button" class="btn btn-primary is-disabled" disabled>Book appointment</button><span class="state-label">Disabled</span></div>
+                  <div class="state"><button type="button" class="btn btn-primary is-loading" aria-busy="true" aria-disabled="true"><span class="spinner" aria-hidden="true"></span>Booking</button><span class="state-label">Loading</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="component">
+            <div class="component-head"><h3>Secondary button</h3><p data-fill="components.button-secondary">Every other action that deserves a box: reschedule, export, invite. It can sit beside the primary or stand alone.</p></div>
+            <div class="pair">
+              <div class="pocket" data-theme="light" data-component="button-secondary" data-tokens="backgroundColor=surface-raised textColor=text borderColor=border-strong rounded=md">
+                <span class="pocket-label">Light</span>
+                <div class="states">
+                  <div class="state" data-state="default"><button type="button" class="btn btn-secondary">Reschedule</button><span class="state-label">Default</span></div>
+                  <div class="state" data-state="hover"><button type="button" class="btn btn-secondary is-hover">Reschedule</button><span class="state-label">Hover</span></div>
+                  <div class="state" data-state="active"><button type="button" class="btn btn-secondary is-active">Reschedule</button><span class="state-label">Pressed</span></div>
+                  <div class="state" data-state="focus"><button type="button" class="btn btn-secondary is-focus">Reschedule</button><span class="state-label">Focus</span></div>
+                  <div class="state" data-state="disabled"><button type="button" class="btn btn-secondary is-disabled" disabled>Reschedule</button><span class="state-label">Disabled</span></div>
+                </div>
+              </div>
+              <div class="pocket" data-theme="dark" inert>
+                <span class="pocket-label">Dark</span>
+                <div class="states">
+                  <div class="state"><button type="button" class="btn btn-secondary">Reschedule</button><span class="state-label">Default</span></div>
+                  <div class="state"><button type="button" class="btn btn-secondary is-hover">Reschedule</button><span class="state-label">Hover</span></div>
+                  <div class="state"><button type="button" class="btn btn-secondary is-active">Reschedule</button><span class="state-label">Pressed</span></div>
+                  <div class="state"><button type="button" class="btn btn-secondary is-focus">Reschedule</button><span class="state-label">Focus</span></div>
+                  <div class="state"><button type="button" class="btn btn-secondary is-disabled" disabled>Reschedule</button><span class="state-label">Disabled</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="component">
+            <div class="component-head"><h3>Ghost button</h3><p data-fill="components.button-ghost">The quiet way out: cancel, skip, close. It lives next to a primary or a secondary, never on its own.</p></div>
+            <div class="pair">
+              <div class="pocket" data-theme="light" data-component="button-ghost" data-tokens="textColor=text rounded=md">
+                <span class="pocket-label">Light</span>
+                <div class="states">
+                  <div class="state" data-state="default"><button type="button" class="btn btn-ghost">Cancel</button><span class="state-label">Default</span></div>
+                  <div class="state" data-state="hover"><button type="button" class="btn btn-ghost is-hover">Cancel</button><span class="state-label">Hover</span></div>
+                  <div class="state" data-state="active"><button type="button" class="btn btn-ghost is-active">Cancel</button><span class="state-label">Pressed</span></div>
+                  <div class="state" data-state="focus"><button type="button" class="btn btn-ghost is-focus">Cancel</button><span class="state-label">Focus</span></div>
+                  <div class="state" data-state="disabled"><button type="button" class="btn btn-ghost is-disabled" disabled>Cancel</button><span class="state-label">Disabled</span></div>
+                </div>
+              </div>
+              <div class="pocket" data-theme="dark" inert>
+                <span class="pocket-label">Dark</span>
+                <div class="states">
+                  <div class="state"><button type="button" class="btn btn-ghost">Cancel</button><span class="state-label">Default</span></div>
+                  <div class="state"><button type="button" class="btn btn-ghost is-hover">Cancel</button><span class="state-label">Hover</span></div>
+                  <div class="state"><button type="button" class="btn btn-ghost is-active">Cancel</button><span class="state-label">Pressed</span></div>
+                  <div class="state"><button type="button" class="btn btn-ghost is-focus">Cancel</button><span class="state-label">Focus</span></div>
+                  <div class="state"><button type="button" class="btn btn-ghost is-disabled" disabled>Cancel</button><span class="state-label">Disabled</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="component">
+            <div class="component-head"><h3>Text field</h3><p data-fill="components.input">A visible label above, never a placeholder alone. The error says what to do, in words, beside an icon.</p></div>
+            <div class="pair">
+              <div class="pocket" data-theme="light" data-component="input" data-tokens="backgroundColor=canvas textColor=text borderColor=border-strong rounded=md">
+                <span class="pocket-label">Light</span>
+                <div class="states">
+                  <div class="state" data-state="default"><label class="field"><span class="field-label">Patient</span><input class="input" type="text" placeholder="Search by name" /></label><span class="state-label">Default</span></div>
+                  <div class="state" data-state="hover"><label class="field"><span class="field-label">Patient</span><input class="input is-hover" type="text" placeholder="Search by name" /></label><span class="state-label">Hover</span></div>
+                  <div class="state" data-state="active"><label class="field"><span class="field-label">Patient</span><input class="input is-active" type="text" value="Maria Bianchi" /></label><span class="state-label">Filled</span></div>
+                  <div class="state" data-state="focus"><label class="field"><span class="field-label">Patient</span><input class="input is-focus" type="text" value="Maria" /></label><span class="state-label">Focus</span></div>
+                  <div class="state" data-state="disabled"><label class="field"><span class="field-label">Patient</span><input class="input is-disabled" type="text" value="Maria Bianchi" disabled /></label><span class="state-label">Disabled</span></div>
+                  <div class="state" data-state="error"><label class="field is-error"><span class="field-label">Patient</span><input class="input is-error" type="text" aria-invalid="true" placeholder="Search by name" /><span class="field-hint"><svg aria-hidden="true"><use href="#i-error" /></svg>Choose a patient to continue</span></label><span class="state-label">Error</span></div>
+                </div>
+              </div>
+              <div class="pocket" data-theme="dark" inert>
+                <span class="pocket-label">Dark</span>
+                <div class="states">
+                  <div class="state"><label class="field"><span class="field-label">Patient</span><input class="input" type="text" placeholder="Search by name" /></label><span class="state-label">Default</span></div>
+                  <div class="state"><label class="field"><span class="field-label">Patient</span><input class="input is-hover" type="text" placeholder="Search by name" /></label><span class="state-label">Hover</span></div>
+                  <div class="state"><label class="field"><span class="field-label">Patient</span><input class="input is-active" type="text" value="Maria Bianchi" /></label><span class="state-label">Filled</span></div>
+                  <div class="state"><label class="field"><span class="field-label">Patient</span><input class="input is-focus" type="text" value="Maria" /></label><span class="state-label">Focus</span></div>
+                  <div class="state"><label class="field"><span class="field-label">Patient</span><input class="input is-disabled" type="text" value="Maria Bianchi" disabled /></label><span class="state-label">Disabled</span></div>
+                  <div class="state"><label class="field is-error"><span class="field-label">Patient</span><input class="input is-error" type="text" aria-invalid="true" placeholder="Search by name" /><span class="field-hint"><svg aria-hidden="true"><use href="#i-error" /></svg>Choose a patient to continue</span></label><span class="state-label">Error</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="component">
+            <div class="component-head"><h3>Select</h3><p data-fill="components.select">For a choice among five to fifteen known options. Fewer than five: show them as tabs or radios.</p></div>
+            <div class="pair">
+              <div class="pocket" data-theme="light" data-component="select" data-tokens="backgroundColor=canvas textColor=text borderColor=border-strong rounded=md">
+                <span class="pocket-label">Light</span>
+                <div class="states">
+                  <div class="state" data-state="default"><label class="field"><span class="field-label">Clinician</span><span class="select"><select><option>Dr. Rossi</option><option>Dr. Conti</option></select><svg aria-hidden="true"><use href="#i-chevron" /></svg></span></label><span class="state-label">Default</span></div>
+                  <div class="state" data-state="hover"><label class="field"><span class="field-label">Clinician</span><span class="select"><select class="is-hover"><option>Dr. Rossi</option><option>Dr. Conti</option></select><svg aria-hidden="true"><use href="#i-chevron" /></svg></span></label><span class="state-label">Hover</span></div>
+                  <div class="state" data-state="focus"><label class="field"><span class="field-label">Clinician</span><span class="select"><select class="is-focus"><option>Dr. Rossi</option><option>Dr. Conti</option></select><svg aria-hidden="true"><use href="#i-chevron" /></svg></span></label><span class="state-label">Focus</span></div>
+                  <div class="state" data-state="disabled"><label class="field"><span class="field-label">Clinician</span><span class="select"><select class="is-disabled" disabled><option>Dr. Rossi</option></select><svg aria-hidden="true"><use href="#i-chevron" /></svg></span></label><span class="state-label">Disabled</span></div>
+                </div>
+              </div>
+              <div class="pocket" data-theme="dark" inert>
+                <span class="pocket-label">Dark</span>
+                <div class="states">
+                  <div class="state"><label class="field"><span class="field-label">Clinician</span><span class="select"><select><option>Dr. Rossi</option><option>Dr. Conti</option></select><svg aria-hidden="true"><use href="#i-chevron" /></svg></span></label><span class="state-label">Default</span></div>
+                  <div class="state"><label class="field"><span class="field-label">Clinician</span><span class="select"><select class="is-hover"><option>Dr. Rossi</option><option>Dr. Conti</option></select><svg aria-hidden="true"><use href="#i-chevron" /></svg></span></label><span class="state-label">Hover</span></div>
+                  <div class="state"><label class="field"><span class="field-label">Clinician</span><span class="select"><select class="is-focus"><option>Dr. Rossi</option><option>Dr. Conti</option></select><svg aria-hidden="true"><use href="#i-chevron" /></svg></span></label><span class="state-label">Focus</span></div>
+                  <div class="state"><label class="field"><span class="field-label">Clinician</span><span class="select"><select class="is-disabled" disabled><option>Dr. Rossi</option></select><svg aria-hidden="true"><use href="#i-chevron" /></svg></span></label><span class="state-label">Disabled</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="component">
+            <div class="component-head"><h3>Checkbox and switch</h3><p data-fill="components.checkbox">A checkbox is saved with the form. A switch acts at once, so it never sits inside a form with a save button.</p></div>
+            <div class="pair split">
+              <div class="pocket" data-theme="light" data-component="checkbox" data-tokens="backgroundColor=primary borderColor=border-strong rounded=sm">
+                <span class="pocket-label">Light</span>
+                <div class="states column">
+                  <div class="state" data-state="default"><label class="check"><input class="checkbox" type="checkbox" />Send a reminder</label></div>
+                  <div class="state" data-state="hover"><label class="check"><input class="checkbox is-hover" type="checkbox" />Send a reminder, hover</label></div>
+                  <div class="state" data-state="active"><label class="check"><input class="checkbox" type="checkbox" checked />Send a reminder, checked</label></div>
+                  <div class="state" data-state="focus"><label class="check"><input class="checkbox is-focus" type="checkbox" checked />Send a reminder, focus</label></div>
+                  <div class="state" data-state="disabled"><label class="check"><input class="checkbox" type="checkbox" checked disabled />Send a reminder, disabled</label></div>
+                </div>
+              </div>
+              <div class="pocket" data-theme="dark" inert>
+                <span class="pocket-label">Dark</span>
+                <div class="states column">
+                  <div class="state"><label class="check"><input class="checkbox" type="checkbox" />Send a reminder</label></div>
+                  <div class="state"><label class="check"><input class="checkbox is-hover" type="checkbox" />Send a reminder, hover</label></div>
+                  <div class="state"><label class="check"><input class="checkbox" type="checkbox" checked />Send a reminder, checked</label></div>
+                  <div class="state"><label class="check"><input class="checkbox is-focus" type="checkbox" checked />Send a reminder, focus</label></div>
+                  <div class="state"><label class="check"><input class="checkbox" type="checkbox" checked disabled />Send a reminder, disabled</label></div>
+                </div>
+              </div>
+            </div>
+            <div class="pair split" style="margin-top: var(--space-3)">
+              <div class="pocket" data-theme="light" data-component="switch" data-tokens="backgroundColor=primary rounded=full">
+                <span class="pocket-label">Light</span>
+                <div class="states column">
+                  <div class="state" data-state="default"><label class="check"><button type="button" class="switch" role="switch" aria-checked="false"></button>Online booking, off</label></div>
+                  <div class="state" data-state="hover"><label class="check"><button type="button" class="switch is-hover" role="switch" aria-checked="false"></button>Online booking, hover</label></div>
+                  <div class="state" data-state="active"><label class="check"><button type="button" class="switch" role="switch" aria-checked="true"></button>Online booking, on</label></div>
+                  <div class="state" data-state="focus"><label class="check"><button type="button" class="switch is-focus" role="switch" aria-checked="true"></button>Online booking, focus</label></div>
+                  <div class="state" data-state="disabled"><label class="check"><button type="button" class="switch" role="switch" aria-checked="false" disabled></button>Online booking, disabled</label></div>
+                </div>
+              </div>
+              <div class="pocket" data-theme="dark" inert>
+                <span class="pocket-label">Dark</span>
+                <div class="states column">
+                  <div class="state"><label class="check"><button type="button" class="switch" role="switch" aria-checked="false"></button>Online booking, off</label></div>
+                  <div class="state"><label class="check"><button type="button" class="switch is-hover" role="switch" aria-checked="false"></button>Online booking, hover</label></div>
+                  <div class="state"><label class="check"><button type="button" class="switch" role="switch" aria-checked="true"></button>Online booking, on</label></div>
+                  <div class="state"><label class="check"><button type="button" class="switch is-focus" role="switch" aria-checked="true"></button>Online booking, focus</label></div>
+                  <div class="state"><label class="check"><button type="button" class="switch" role="switch" aria-checked="false" disabled></button>Online booking, disabled</label></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="component">
+            <div class="component-head"><h3>Card</h3><p data-fill="components.card">One appointment, one card. The time leads, the person follows, the status closes. A card lifts only when it can be opened.</p></div>
+            <div class="pair">
+              <div class="pocket" data-theme="light" data-component="card" data-tokens="backgroundColor=surface-raised textColor=text borderColor=border rounded=lg">
+                <span class="pocket-label">Light</span>
+                <div class="states">
+                  <div class="state" data-state="default"><button type="button" class="appt"><span class="appt-time">09:30 · 30 min</span><span class="appt-name">Maria Bianchi</span><span class="appt-meta">Check-up · Room 2</span><span class="badge"><span class="dot" aria-hidden="true"></span>Confirmed</span></button><span class="state-label">Default</span></div>
+                  <div class="state" data-state="hover"><button type="button" class="appt is-hover"><span class="appt-time">10:00 · 45 min</span><span class="appt-name">Luca Ferri</span><span class="appt-meta">First visit · Room 1</span><span class="badge"><span class="dot" aria-hidden="true"></span>Confirmed</span></button><span class="state-label">Hover</span></div>
+                  <div class="state" data-state="active"><button type="button" class="appt is-active" aria-pressed="true"><span class="appt-time">11:15 · 30 min</span><span class="appt-name">Giulia Marino</span><span class="appt-meta">Follow-up · Room 2</span><span class="badge"><span class="dot" aria-hidden="true"></span>Selected</span></button><span class="state-label">Selected</span></div>
+                  <div class="state" data-state="focus"><button type="button" class="appt is-focus"><span class="appt-time">12:00 · 15 min</span><span class="appt-name">Paolo Greco</span><span class="appt-meta">Results · Phone</span><span class="badge"><span class="dot" aria-hidden="true"></span>Confirmed</span></button><span class="state-label">Focus</span></div>
+                </div>
+              </div>
+              <div class="pocket" data-theme="dark" inert>
+                <span class="pocket-label">Dark</span>
+                <div class="states">
+                  <div class="state"><button type="button" class="appt"><span class="appt-time">09:30 · 30 min</span><span class="appt-name">Maria Bianchi</span><span class="appt-meta">Check-up · Room 2</span><span class="badge"><span class="dot" aria-hidden="true"></span>Confirmed</span></button><span class="state-label">Default</span></div>
+                  <div class="state"><button type="button" class="appt is-hover"><span class="appt-time">10:00 · 45 min</span><span class="appt-name">Luca Ferri</span><span class="appt-meta">First visit · Room 1</span><span class="badge"><span class="dot" aria-hidden="true"></span>Confirmed</span></button><span class="state-label">Hover</span></div>
+                  <div class="state"><button type="button" class="appt is-active" aria-pressed="true"><span class="appt-time">11:15 · 30 min</span><span class="appt-name">Giulia Marino</span><span class="appt-meta">Follow-up · Room 2</span><span class="badge"><span class="dot" aria-hidden="true"></span>Selected</span></button><span class="state-label">Selected</span></div>
+                  <div class="state"><button type="button" class="appt is-focus"><span class="appt-time">12:00 · 15 min</span><span class="appt-name">Paolo Greco</span><span class="appt-meta">Results · Phone</span><span class="badge"><span class="dot" aria-hidden="true"></span>Confirmed</span></button><span class="state-label">Focus</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="component">
+            <div class="component-head"><h3>Table</h3><p data-fill="components.table">For a day of bookings or a list of patients. Times in mono, status as a dot and a word, the current row marked by a bar.</p></div>
+            <div class="pair">
+              <div class="pocket" data-theme="light" data-component="table" data-tokens="backgroundColor=surface-raised textColor=text borderColor=border rounded=lg">
+                <span class="pocket-label">Light</span>
+                <div class="table-wrap">
+                  <table class="data table">
+                    <thead><tr data-state="default"><th scope="col">Time</th><th scope="col">Patient</th><th scope="col">Clinician</th><th scope="col">Status</th></tr></thead>
+                    <tbody>
+                      <tr><td class="mono">09:30</td><td>Maria Bianchi</td><td>Dr. Rossi</td><td><span class="status status-ok"><span class="dot" aria-hidden="true"></span>Confirmed</span></td></tr>
+                      <tr class="is-hover" data-state="hover"><td class="mono">10:00</td><td>Luca Ferri</td><td>Dr. Conti</td><td><span class="status status-wait"><span class="dot" aria-hidden="true"></span>Waiting</span></td></tr>
+                      <tr class="is-active" data-state="active" aria-selected="true"><td class="mono">11:15</td><td>Giulia Marino</td><td>Dr. Rossi</td><td><span class="status status-ok"><span class="dot" aria-hidden="true"></span>Confirmed</span></td></tr>
+                      <tr><td class="mono">12:00</td><td>Paolo Greco</td><td>Dr. Conti</td><td><span class="status status-off"><span class="dot" aria-hidden="true"></span>Cancelled</span></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <span class="state-label">Rows: default, hover, selected</span>
+              </div>
+              <div class="pocket" data-theme="dark" inert>
+                <span class="pocket-label">Dark</span>
+                <div class="table-wrap">
+                  <table class="data table">
+                    <thead><tr><th scope="col">Time</th><th scope="col">Patient</th><th scope="col">Clinician</th><th scope="col">Status</th></tr></thead>
+                    <tbody>
+                      <tr><td class="mono">09:30</td><td>Maria Bianchi</td><td>Dr. Rossi</td><td><span class="status status-ok"><span class="dot" aria-hidden="true"></span>Confirmed</span></td></tr>
+                      <tr class="is-hover"><td class="mono">10:00</td><td>Luca Ferri</td><td>Dr. Conti</td><td><span class="status status-wait"><span class="dot" aria-hidden="true"></span>Waiting</span></td></tr>
+                      <tr class="is-active" aria-selected="true"><td class="mono">11:15</td><td>Giulia Marino</td><td>Dr. Rossi</td><td><span class="status status-ok"><span class="dot" aria-hidden="true"></span>Confirmed</span></td></tr>
+                      <tr><td class="mono">12:00</td><td>Paolo Greco</td><td>Dr. Conti</td><td><span class="status status-off"><span class="dot" aria-hidden="true"></span>Cancelled</span></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <span class="state-label">Rows: default, hover, selected</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="component">
+            <div class="component-head"><h3>Tabs</h3><p data-fill="components.tabs">To switch between views of the same thing. The selected tab carries a bar, never only a color.</p></div>
+            <div class="pair">
+              <div class="pocket" data-theme="light" data-component="tabs" data-tokens="textColor=text borderColor=border rounded=md">
+                <span class="pocket-label">Light</span>
+                <div>
+                  <div class="tabs" role="tablist" aria-label="Calendar view">
+                    <button type="button" class="tab" role="tab" aria-selected="true" data-state="active">Day</button>
+                    <button type="button" class="tab is-hover" role="tab" aria-selected="false" data-state="hover">Week</button>
+                    <button type="button" class="tab is-focus" role="tab" aria-selected="false" data-state="focus">Month</button>
+                    <button type="button" class="tab" role="tab" aria-selected="false" data-state="default">List</button>
+                    <button type="button" class="tab" role="tab" aria-selected="false" disabled data-state="disabled">Team</button>
+                  </div>
+                  <p class="tab-panel">Selected, hover, focus, default and disabled, left to right.</p>
+                </div>
+              </div>
+              <div class="pocket" data-theme="dark" inert>
+                <span class="pocket-label">Dark</span>
+                <div>
+                  <div class="tabs" role="tablist" aria-label="Calendar view">
+                    <button type="button" class="tab" role="tab" aria-selected="true">Day</button>
+                    <button type="button" class="tab is-hover" role="tab" aria-selected="false">Week</button>
+                    <button type="button" class="tab is-focus" role="tab" aria-selected="false">Month</button>
+                    <button type="button" class="tab" role="tab" aria-selected="false">List</button>
+                    <button type="button" class="tab" role="tab" aria-selected="false" disabled>Team</button>
+                  </div>
+                  <p class="tab-panel">Selected, hover, focus, default and disabled, left to right.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="component">
+            <div class="component-head"><h3>Dialog</h3><p data-fill="components.dialog">Only to confirm what cannot be undone. The title asks the question, the buttons answer it in words.</p></div>
+            <div class="pair split">
+              <div class="pocket" data-theme="light" data-component="dialog" data-tokens="backgroundColor=surface-raised textColor=text rounded=lg">
+                <span class="pocket-label">Light</span>
+                <div class="backdrop" data-state="default">
+                  <div class="backdrop-rows" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+                  <div class="dialog" role="dialog" aria-label="Cancel this appointment">
+                    <h4>Cancel this appointment?</h4>
+                    <p>Maria Bianchi gets a message with a link to book again. The slot opens for others at once.</p>
+                    <div class="dialog-actions"><button type="button" class="btn btn-ghost">Keep it</button><button type="button" class="btn btn-danger">Cancel appointment</button></div>
+                  </div>
+                </div>
+              </div>
+              <div class="pocket" data-theme="dark" inert>
+                <span class="pocket-label">Dark</span>
+                <div class="backdrop">
+                  <div class="backdrop-rows" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+                  <div class="dialog" role="dialog" aria-label="Cancel this appointment">
+                    <h4>Cancel this appointment?</h4>
+                    <p>Maria Bianchi gets a message with a link to book again. The slot opens for others at once.</p>
+                    <div class="dialog-actions"><button type="button" class="btn btn-ghost">Keep it</button><button type="button" class="btn btn-danger">Cancel appointment</button></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="component">
+            <div class="component-head"><h3>Toast</h3><p data-fill="components.toast">Says what just happened, in one line, and leaves after six seconds. An error stays until it is dismissed.</p></div>
+            <div class="pair split">
+              <div class="pocket" data-theme="light" data-component="toast" data-tokens="backgroundColor=surface-raised textColor=text borderColor=border rounded=md">
+                <span class="pocket-label">Light</span>
+                <div class="states column">
+                  <div class="toast toast-success" role="status" data-state="success"><svg aria-hidden="true"><use href="#i-ok" /></svg><div class="toast-body"><strong>Appointment booked</strong><span>Maria Bianchi, Tuesday at 09:30</span></div><button type="button" class="btn btn-ghost btn-icon" aria-label="Dismiss"><svg aria-hidden="true"><use href="#i-close" /></svg></button></div>
+                  <div class="toast toast-warning" role="status" data-state="warning"><svg aria-hidden="true"><use href="#i-warn" /></svg><div class="toast-body"><strong>Dr. Rossi is running late</strong><span>The next three patients have been told.</span></div><button type="button" class="btn btn-ghost btn-icon" aria-label="Dismiss"><svg aria-hidden="true"><use href="#i-close" /></svg></button></div>
+                  <div class="toast toast-danger" role="alert" data-state="error"><svg aria-hidden="true"><use href="#i-error" /></svg><div class="toast-body"><strong>Reminder not sent</strong><span>Check the phone number and try again.</span></div><button type="button" class="btn btn-ghost btn-icon" aria-label="Dismiss"><svg aria-hidden="true"><use href="#i-close" /></svg></button></div>
+                </div>
+              </div>
+              <div class="pocket" data-theme="dark" inert>
+                <span class="pocket-label">Dark</span>
+                <div class="states column">
+                  <div class="toast toast-success" role="status"><svg aria-hidden="true"><use href="#i-ok" /></svg><div class="toast-body"><strong>Appointment booked</strong><span>Maria Bianchi, Tuesday at 09:30</span></div><button type="button" class="btn btn-ghost btn-icon" aria-label="Dismiss"><svg aria-hidden="true"><use href="#i-close" /></svg></button></div>
+                  <div class="toast toast-warning" role="status"><svg aria-hidden="true"><use href="#i-warn" /></svg><div class="toast-body"><strong>Dr. Rossi is running late</strong><span>The next three patients have been told.</span></div><button type="button" class="btn btn-ghost btn-icon" aria-label="Dismiss"><svg aria-hidden="true"><use href="#i-close" /></svg></button></div>
+                  <div class="toast toast-danger" role="alert"><svg aria-hidden="true"><use href="#i-error" /></svg><div class="toast-body"><strong>Reminder not sent</strong><span>Check the phone number and try again.</span></div><button type="button" class="btn btn-ghost btn-icon" aria-label="Dismiss"><svg aria-hidden="true"><use href="#i-close" /></svg></button></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="component">
+            <div class="component-head"><h3>Empty state</h3><p data-fill="components.empty-state">Says why the space is empty and offers the one next step. No illustration, no joke.</p></div>
+            <div class="pair split">
+              <div class="pocket" data-theme="light" data-component="empty-state" data-tokens="backgroundColor=surface textColor=text-muted rounded=lg">
+                <span class="pocket-label">Light</span>
+                <div class="empty" data-state="default">
+                  <span class="empty-icon"><svg aria-hidden="true"><use href="#i-calendar" /></svg></span>
+                  <h4>No appointments today</h4>
+                  <p>Enjoy the quiet, or open the week to book ahead.</p>
+                  <button type="button" class="btn btn-secondary">Open the week</button>
+                </div>
+              </div>
+              <div class="pocket" data-theme="dark" inert>
+                <span class="pocket-label">Dark</span>
+                <div class="empty">
+                  <span class="empty-icon"><svg aria-hidden="true"><use href="#i-calendar" /></svg></span>
+                  <h4>No appointments today</h4>
+                  <p>Enjoy the quiet, or open the week to book ahead.</p>
+                  <button type="button" class="btn btn-secondary">Open the week</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="component">
+            <div class="component-head"><h3>Navigation</h3><p data-fill="components.nav">Four places at most, named with nouns. The current place is marked by its fill, and the mark always leads home.</p></div>
+            <div class="pair">
+              <div class="pocket" data-theme="light" data-component="nav" data-tokens="backgroundColor=surface textColor=text borderColor=border">
+                <span class="pocket-label">Light</span>
+                <nav class="appnav" aria-label="Sample app">
+                  <span class="lockup"><svg class="mark" aria-hidden="true"><use href="#mark" /></svg><span class="wordmark">Sample</span></span>
+                  <ul>
+                    <li><a href="#components" aria-current="page" data-state="active">Today</a></li>
+                    <li><a href="#components" class="is-hover" data-state="hover">Week</a></li>
+                    <li><a href="#components" class="is-focus" data-state="focus">Patients</a></li>
+                    <li><a href="#components" data-state="default">Settings</a></li>
+                  </ul>
+                  <span class="avatar" aria-hidden="true">MB</span>
+                </nav>
+                <span class="state-label">Current, hover, focus, default</span>
+              </div>
+              <div class="pocket" data-theme="dark" inert>
+                <span class="pocket-label">Dark</span>
+                <nav class="appnav" aria-label="Sample app">
+                  <span class="lockup"><svg class="mark" aria-hidden="true"><use href="#mark" /></svg><span class="wordmark">Sample</span></span>
+                  <ul>
+                    <li><a href="#components" aria-current="page">Today</a></li>
+                    <li><a href="#components" class="is-hover">Week</a></li>
+                    <li><a href="#components" class="is-focus">Patients</a></li>
+                    <li><a href="#components">Settings</a></li>
+                  </ul>
+                  <span class="avatar" aria-hidden="true">MB</span>
+                </nav>
+                <span class="state-label">Current, hover, focus, default</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="motion" class="chapter" data-chapter="08" aria-labelledby="motion-title">
+          <header class="chapter-head"><span class="chapter-nn">08</span><h2 id="motion-title">Motion</h2></header>
+          <p class="lede" data-fill="motion.lede">Motion explains where something came from and nothing more. Short, eased out, and off when the system asks for less motion.</p>
+
+          <h3>Timing</h3>
+          <div class="motion-tokens">
+            <div class="tile"><code>motion-fast</code><span data-token-value="motion-fast"></span></div>
+            <div class="tile"><code>motion-base</code><span data-token-value="motion-base"></span></div>
+            <div class="tile"><code>motion-slow</code><span data-token-value="motion-slow"></span></div>
+            <div class="tile"><code>ease</code><span data-token-value="ease"></span></div>
+          </div>
+
+          <h3>In use</h3>
+          <div class="demos">
+            <figure class="demo">
+              <div class="demo-stage"><div class="demo-card fade-rise" aria-hidden="true"><span></span><span></span><span></span></div></div>
+              <figcaption><h4>Fade and rise</h4><p data-fill="motion.fade">A new booking or a toast arrives from just below, in the slow step.</p></figcaption>
+            </figure>
+            <figure class="demo">
+              <div class="demo-stage"><div class="demo-card expand" aria-hidden="true"><span></span><span></span><span></span></div></div>
+              <figcaption><h4>Expand</h4><p data-fill="motion.expand">A row opens in place to show its details, in the base step.</p></figcaption>
+            </figure>
+            <figure class="demo">
+              <div class="demo-stage"><span class="spinner demo-spinner" aria-hidden="true"></span></div>
+              <figcaption><h4>Spinner</h4><p data-fill="motion.spinner">Only inside the button that started the wait, and only after half a second.</p></figcaption>
+            </figure>
+          </div>
+          <p class="note">With reduced motion set in the system, every animation on this page stops and every transition is instant.</p>
+        </section>
+
+        <section id="voice" class="chapter" data-chapter="09" aria-labelledby="voice-title">
+          <header class="chapter-head"><span class="chapter-nn">09</span><h2 id="voice-title">Voice</h2></header>
+          <p class="lede" data-fill="voice.lede">Sample speaks like a good receptionist: warm, brief and certain.</p>
+
+          <h3>Tone</h3>
+          <ul class="tone">
+            <li data-fill="voice.tone-1">We name the person, the time and the place, every time.</li>
+            <li data-fill="voice.tone-2">We stay calm when something fails and say what to do next.</li>
+            <li data-fill="voice.tone-3">We use the words a clinic uses, not the words a database uses.</li>
+          </ul>
+
+          <h3>Do and don't</h3>
+          <div class="dodont">
+            <span class="dodont-head do"><svg aria-hidden="true"><use href="#i-check" /></svg>Do</span>
+            <span class="dodont-head dont"><svg aria-hidden="true"><use href="#i-close" /></svg>Don't</span>
+            <p class="do" data-fill="voice.do-1">Appointment moved to 10:00.</p>
+            <p class="dont" data-fill="voice.dont-1">Success. Your appointment has been updated.</p>
+            <p class="do" data-fill="voice.do-2">Dr. Rossi is free at 14:30.</p>
+            <p class="dont" data-fill="voice.dont-2">There may be availability later today.</p>
+            <p class="do" data-fill="voice.do-3">Reminder not sent. Check the phone number.</p>
+            <p class="dont" data-fill="voice.dont-3">Oops, something went wrong.</p>
+            <p class="do" data-fill="voice.do-4">Book appointment</p>
+            <p class="dont" data-fill="voice.dont-4">Submit</p>
+          </div>
+        </section>
+
+        <section id="responsive" class="chapter" data-chapter="10" aria-labelledby="responsive-title">
+          <header class="chapter-head"><span class="chapter-nn">10</span><h2 id="responsive-title">Responsive</h2></header>
+          <p class="lede" data-fill="responsive.lede">Sample runs on a front desk monitor and on a clinician's phone between rooms. The layout changes at three widths; the rules below never do.</p>
+
+          <h3>Breakpoints</h3>
+          <div class="ruler" aria-hidden="true">
+            <span style="left: 0">0</span>
+            <span style="left: 40%">640</span>
+            <span style="left: 56.25%">900</span>
+            <span style="left: 75%">1200</span>
+          </div>
+          <ul class="breakpoints">
+            <li class="tile"><strong>640 px</strong><p data-fill="responsive.bp-640">Below 640 the week becomes a list of days and the menu folds behind a button.</p></li>
+            <li class="tile"><strong>900 px</strong><p data-fill="responsive.bp-900">From 900 the sidebar stays open and the day shows two clinicians side by side.</p></li>
+            <li class="tile"><strong>1200 px</strong><p data-fill="responsive.bp-1200">From 1200 the week shows every clinician and the booking panel opens beside it.</p></li>
+          </ul>
+
+          <h3>Rules that never change</h3>
+          <ul class="rules">
+            <li><svg aria-hidden="true"><use href="#i-ok" /></svg><span>Every target is at least 24 by 24 px <span class="target-demo" aria-hidden="true"></span>, and 44 on touch screens.</span></li>
+            <li><svg aria-hidden="true"><use href="#i-ok" /></svg><span>Focus is always visible on every control: a ring in the focus color, set off from the edge.</span></li>
+            <li><svg aria-hidden="true"><use href="#i-ok" /></svg><span>Text meets 4.5:1 and icons, large text and focus rings meet 3:1, in light and in dark, as measured in chapter 03.</span></li>
+          </ul>
+        </section>
+
+        <footer class="book-foot">
+          <p><span class="wordmark">Sample</span> design guidelines. Edit the tokens in the head of this file and every chapter follows.</p>
+        </footer>
+      </div>
+    </main>
+
+    <button type="button" data-theme-toggle><svg aria-hidden="true"><use href="#i-moon" /></svg><span>Dark</span></button>
+    <div hidden data-probe data-theme="dark"></div>
+
+    <script>
+      (function () {
+        var root = document.documentElement;
+        var style = document.querySelector("style").textContent;
+        var block = style.slice(style.indexOf("tokens:start"), style.indexOf("tokens:end"));
+        var names = [];
+        block.replace(/--([\w-]+)\s*:/g, function (whole, name) {
+          if (names.indexOf(name) === -1) names.push(name);
+          return whole;
+        });
+        var colorNames = names.filter(function (n) { return n.indexOf("color-") === 0; });
+        var themed = names.filter(function (n) { return n.indexOf("color-") === 0 || n.indexOf("shadow-") === 0; });
+
+        function read(el) {
+          var computed = getComputedStyle(el);
+          var out = {};
+          names.forEach(function (n) { out[n] = computed.getPropertyValue("--" + n).trim(); });
+          return out;
+        }
+        // Light values are read with the page in light for a moment, so a
+        // saved dark theme cannot leak into them; nothing paints in between.
+        var current = root.dataset.theme;
+        root.dataset.theme = "light";
+        var light = read(root);
+        root.dataset.theme = current;
+        var darkProbe = document.querySelector("[data-probe]");
+        var dark = read(darkProbe);
+
+        // A light pocket shows light values even when the page is dark.
+        document.querySelectorAll('[data-theme="light"]').forEach(function (el) {
+          if (el === root) return;
+          themed.forEach(function (n) { el.style.setProperty("--" + n, light[n]); });
+        });
+
+        var wordmark = document.querySelector('[data-fill="mark.wordmark"]');
+        if (wordmark) {
+          document.querySelectorAll(".wordmark").forEach(function (el) { el.textContent = wordmark.textContent.trim(); });
+        }
+
+        document.querySelectorAll("[data-token-value]").forEach(function (el) {
+          el.textContent = light[el.getAttribute("data-token-value")] || "";
+        });
+        document.querySelectorAll("[data-face]").forEach(function (el) {
+          var stack = light["font-" + el.getAttribute("data-face")] || "";
+          el.textContent = stack.split(",")[0].trim().replace(/^["']|["']$/g, "");
+        });
+        names.forEach(function (n) {
+          var role = light["text-" + n.slice(5) + "-family"];
+          if (n.indexOf("text-") === 0 && role) root.style.setProperty("--book-font-" + n.slice(5), "var(--font-" + role + ")");
+        });
+        document.querySelectorAll("[data-type-meta]").forEach(function (el) {
+          var t = "text-" + el.getAttribute("data-type-meta");
+          el.textContent = [light[t], "weight " + light[t + "-weight"], "leading " + light[t + "-leading"], "tracking " + light[t + "-tracking"]].join(" · ");
+        });
+
+        function rgba(value) {
+          darkProbe.style.color = "";
+          darkProbe.style.color = value;
+          var m = getComputedStyle(darkProbe).color.match(/[\d.]+/g) || [0, 0, 0];
+          return { r: +m[0], g: +m[1], b: +m[2], a: m[3] === undefined ? 1 : +m[3] };
+        }
+        // The same formula as scripts/lib/contrast.mjs, so the page and check agree.
+        function linear(c) {
+          var v = c / 255;
+          return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+        }
+        function luminance(c) { return 0.2126 * linear(c.r) + 0.7152 * linear(c.g) + 0.0722 * linear(c.b); }
+        function over(fg, bg) {
+          var a = fg.a;
+          return { r: fg.r * a + bg.r * (1 - a), g: fg.g * a + bg.g * (1 - a), b: fg.b * a + bg.b * (1 - a), a: 1 };
+        }
+        function ratio(values, fg, bg) {
+          var canvas = rgba(values["color-canvas"]);
+          var back = rgba(values[bg]);
+          if (back.a < 1) back = over(back, canvas);
+          var front = over(rgba(values[fg]), back);
+          var a = luminance(front);
+          var b = luminance(back);
+          return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+        }
+
+        function el(tag, className, text) {
+          var node = document.createElement(tag);
+          if (className) node.className = className;
+          if (text !== undefined) node.textContent = text;
+          return node;
+        }
+        function icon(id) {
+          var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+          svg.setAttribute("aria-hidden", "true");
+          var use = document.createElementNS("http://www.w3.org/2000/svg", "use");
+          use.setAttribute("href", "#" + id);
+          svg.appendChild(use);
+          return svg;
+        }
+
+        var groups = [
+          ["Surfaces and lines", function (n) { return /^color-(canvas|surface|border)/.test(n); }],
+          ["Text", function (n) { return /^color-text/.test(n); }],
+          ["Brand", function (n) { return /^color-(primary|accent|focus)/.test(n); }],
+          ["Status", function (n) { return /^color-(success|warning|danger)/.test(n); }],
+        ];
+        var placed = [];
+        var swatches = document.querySelector("[data-swatches]");
+        groups.concat([["Other", function (n) { return placed.indexOf(n) === -1; }]]).forEach(function (group) {
+          var members = colorNames.filter(function (n) { return placed.indexOf(n) === -1 && group[1](n); });
+          if (!members.length) return;
+          var wrap = el("div", "swatch-group");
+          wrap.appendChild(el("h4", "", group[0]));
+          var grid = el("div", "swatches");
+          members.forEach(function (n) {
+            placed.push(n);
+            var fig = el("figure", "swatch");
+            var chip = el("div", "swatch-chip");
+            var l = el("span");
+            var d = el("span");
+            l.style.background = light[n];
+            d.style.background = dark[n];
+            chip.append(l, d);
+            var cap = el("figcaption");
+            cap.append(el("code", "", "--" + n), el("span", "", "Light " + light[n]), el("span", "", "Dark " + dark[n]));
+            fig.append(chip, cap);
+            grid.appendChild(fig);
+          });
+          wrap.appendChild(grid);
+          swatches.appendChild(wrap);
+        });
+
+        var table = document.querySelector("[data-contrast]");
+        var body = table.querySelector("tbody");
+        table.getAttribute("data-pairs").split(",").forEach(function (entry) {
+          var parts = entry.trim().split(":");
+          var fg = parts[0], bg = parts[1], min = parseFloat(parts[2]);
+          var row = el("tr");
+          var pair = el("td");
+          pair.append(el("code", "", fg.replace("color-", "")), document.createTextNode(" on "), el("code", "", bg.replace("color-", "")));
+          row.append(pair, el("td", "mono", min + ":1"));
+          [light, dark].forEach(function (values) {
+            var value = ratio(values, fg, bg);
+            var pass = value >= min;
+            var cell = el("td");
+            var measure = el("span", "measure");
+            var sample = el("span", "sample-aa", "Aa");
+            sample.setAttribute("aria-hidden", "true");
+            sample.style.color = values[fg];
+            sample.style.background = values[bg];
+            var verdict = el("span", "verdict " + (pass ? "pass" : "fail"));
+            verdict.append(icon(pass ? "i-check" : "i-close"), document.createTextNode(pass ? "Pass" : "Fail"));
+            measure.append(sample, el("span", "mono", (Math.floor(value * 100) / 100).toFixed(2) + ":1"), verdict);
+            cell.appendChild(measure);
+            row.appendChild(cell);
+          });
+          body.appendChild(row);
+        });
+
+        // Scroll-spy: the chapter crossing the top third of the window is current.
+        var links = Array.prototype.slice.call(document.querySelectorAll("[data-sidebar] .sidebar-list a"));
+        var list = document.querySelector(".sidebar-list");
+        var chapters = links.map(function (a) { return document.querySelector(a.getAttribute("href")); });
+        var visible = new Set();
+        function mark(id) {
+          links.forEach(function (a) {
+            if (a.getAttribute("href") === "#" + id) {
+              a.setAttribute("aria-current", "true");
+              if (list.scrollWidth > list.clientWidth) {
+                list.scrollTo({ left: a.offsetLeft - list.clientWidth / 2 + a.offsetWidth / 2 });
+              }
+            } else {
+              a.removeAttribute("aria-current");
+            }
+          });
+        }
+        var spy = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) visible.add(entry.target.id);
+            else visible.delete(entry.target.id);
+          });
+          var atEnd = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+          var first = chapters.filter(function (c) { return visible.has(c.id); })[0];
+          if (atEnd) mark(chapters[chapters.length - 1].id);
+          else if (first) mark(first.id);
+        }, { rootMargin: "0px 0px -66% 0px" });
+        mark(chapters[0].id);
+        chapters.forEach(function (c) { spy.observe(c); });
+        window.addEventListener("scroll", function () {
+          if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) mark(chapters[chapters.length - 1].id);
+        }, { passive: true });
+
+        var toggle = document.querySelector("[data-theme-toggle]");
+        function label() {
+          var isDark = root.dataset.theme === "dark";
+          toggle.querySelector("span").textContent = isDark ? "Light" : "Dark";
+          toggle.querySelector("use").setAttribute("href", isDark ? "#i-sun" : "#i-moon");
+          toggle.setAttribute("aria-label", isDark ? "Switch to the light theme" : "Switch to the dark theme");
+        }
+        label();
+        toggle.addEventListener("click", function () {
+          var next = root.dataset.theme === "dark" ? "light" : "dark";
+          root.dataset.theme = next;
+          try { localStorage.setItem("brand-theme", next); } catch (e) {}
+          label();
+        });
+      })();
+    </script>
+  </body>
+</html>

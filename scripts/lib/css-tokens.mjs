@@ -60,7 +60,9 @@ class TokenBlockError extends Error {
 }
 
 // Every marked region of the brand book is read the same way, so a later
-// block (fonts, for one) only needs a new name.
+// block (fonts, for one) only needs a new name. Inside <style> a bare marker
+// turns the next rule into an invalid selector, so a marker may sit in a CSS
+// comment, `/* <!-- tokens:start --> */`, and the comment stays outside.
 function readBlock(html, name) {
   const open = `<!-- ${name}:start -->`;
   const close = `<!-- ${name}:end -->`;
@@ -68,8 +70,13 @@ function readBlock(html, name) {
   if (from === -1) throw new TokenBlockError(`Missing marker ${open}`);
   const to = html.indexOf(close, from + open.length);
   if (to === -1) throw new TokenBlockError(`Missing marker ${close}`);
-  const start = from + open.length;
-  return { css: html.slice(start, to), start, end: to };
+  let start = from + open.length;
+  let end = to;
+  if (/\/\*[ \t]*$/.test(html.slice(0, from))) {
+    start += html.slice(start).match(/^[ \t]*(\*\/)?/)[0].length;
+    end -= html.slice(0, to).match(/(\/\*)?[ \t]*$/)[0].length;
+  }
+  return { css: html.slice(start, end), start, end };
 }
 
 function readTokenBlock(html) {

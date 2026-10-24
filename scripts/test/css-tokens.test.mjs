@@ -21,6 +21,15 @@ test("readTokenBlock returns the css between the markers", () => {
   assert.ok(start < end);
 });
 
+test("markers inside a css comment leave the comment out of the block", () => {
+  const html =
+    "<style>\n/* <!-- tokens:start --> */\n:root { --a: 1; }\n/* <!-- tokens:end --> */\n</style>";
+  const { css, start, end } = readTokenBlock(html);
+  assert.equal(css, "\n:root { --a: 1; }\n");
+  assert.equal(html.slice(start, end), css);
+  assert.equal(parseTokens(css).light.get("a"), "1");
+});
+
 test("readTokenBlock throws naming a missing marker", () => {
   const html = fixture.replace("<!-- tokens:end -->", "");
   assert.throws(

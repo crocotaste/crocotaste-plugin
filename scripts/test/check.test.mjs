@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { run } from "../lib/cli.mjs";
 import { checkBrandBook } from "../commands/check.mjs";
 
@@ -164,4 +165,74 @@ test("states count only inside the component, ids need a word edge", () => {
     '<section data-id="mark" data-chapter>'
   );
   assert.ok(named(checkBrandBook(dataId), "chapter mark: missing"));
+});
+
+test("a data-fill still holding its sample is unfilled, a rewritten one is not", () => {
+  const book = `${html}<p data-fill="voice.tone">Warm and brief.</p><h4 data-fill="voice.do-1">Say <b>when</b></h4>`;
+  const samples = { "voice.tone": "Warm and brief.", "voice.do-1": "Say when" };
+  assert.deepEqual(checkBrandBook(book, { samples }).problems, [
+    "unfilled: voice.tone",
+    "unfilled: voice.do-1",
+  ]);
+  const filled = book.replace("Warm and brief.", "Plain and kind.");
+  assert.deepEqual(checkBrandBook(filled, { samples }).problems, [
+    "unfilled: voice.do-1",
+  ]);
+  assert.deepEqual(checkBrandBook(book).problems, []);
+});
+
+test("--samples prints each data-fill once and names a duplicate", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "crocotaste-check-"));
+  writeFileSync(
+    join(dir, "a.html"),
+    '<p data-fill="x.one">  One\n  line </p><span data-fill="x.two">Two &amp; more</span>'
+  );
+  writeFileSync(
+    join(dir, "b.html"),
+    '<p data-fill="x.one">One</p><p data-fill="x.one">Again</p>'
+  );
+  const out = [];
+  const err = [];
+  const io = {
+    stdout: { write: (t) => out.push(t) },
+    stderr: { write: (t) => err.push(t) },
+    cwd: dir,
+  };
+  assert.equal(await run(["check", "--samples", "a.html"], io), 0);
+  assert.deepEqual(JSON.parse(out.join("")), {
+    "x.one": "One line",
+    "x.two": "Two & more",
+  });
+  assert.equal(await run(["check", "--samples", "b.html"], io), 1);
+  assert.deepEqual(err, ["duplicate data-fill: x.one\n"]);
+});
+
+test("a copy of the template is unfilled everywhere, the template itself is clean", async () => {
+  const template = readFileSync(
+    new URL(
+      "../../skills/guidelines/templates/brand-book.html",
+      import.meta.url
+    ),
+    "utf8"
+  );
+  const dir = mkdtempSync(join(tmpdir(), "crocotaste-check-"));
+  writeFileSync(join(dir, "BRAND.html"), template);
+  const out = [];
+  const io = {
+    stdout: { write: (t) => out.push(t) },
+    stderr: { write() {} },
+    cwd: dir,
+  };
+  assert.equal(await run(["check", "BRAND.html", "--json"], io), 1);
+  const { problems } = JSON.parse(out.join(""));
+  assert.ok(problems.length > 0);
+  assert.ok(problems.every((p) => p.startsWith("unfilled: ")));
+  out.length = 0;
+  const templatePath = fileURLToPath(
+    new URL(
+      "../../skills/guidelines/templates/brand-book.html",
+      import.meta.url
+    )
+  );
+  assert.equal(await run(["check", templatePath], io), 0);
 });

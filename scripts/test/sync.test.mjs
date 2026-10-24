@@ -93,7 +93,10 @@ test("skips a file without markers, names it and leaves it untouched", async () 
 test("a screen with tokens markers but no fonts markers gets only its tokens", async () => {
   const { dir, brandPath, mockups } = setup();
   await sync(dir, [brandPath, mockups]);
-  const noFonts = screen("N", "").replace(/<!-- fonts:(start|end) -->\n/g, "");
+  const noFonts = screen("N", "").replace(
+    /^.*<!-- fonts:(start|end) -->.*\n/gm,
+    ""
+  );
   writeFileSync(join(mockups, "n.html"), noFonts);
   const result = await sync(dir, [brandPath, mockups]);
   assert.equal(result.err, "");

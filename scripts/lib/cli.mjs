@@ -3,7 +3,7 @@ const COMMANDS = new Map([
     "check",
     {
       summary: "Check BRAND.html and DESIGN.md for broken rules and drift",
-      usage: "crocotaste check [--json]",
+      usage: "crocotaste check <BRAND.html> [--json] | --samples <file>",
       load: () => import("../commands/check.mjs"),
     },
   ],
