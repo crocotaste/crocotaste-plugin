@@ -23,7 +23,12 @@ function fakeFetch(status = 200, calls = []) {
     calls.push({ url: String(url), init });
     if (status !== 200) return new Response("nope", { status });
     if (String(url).includes("googleapis.com")) {
-      return new Response(css2, { status: 200 });
+      // One family's faces, as Google answers per request.
+      const name = String(url).match(/family=([A-Za-z]+)/)[1];
+      const faces = css2
+        .split("\n\n")
+        .filter((block) => block.includes(`font-family: '${name}'`));
+      return new Response(faces.join("\n\n"), { status: 200 });
     }
     return new Response(BYTES, { status: 200 });
   };
@@ -84,7 +89,7 @@ test("writes between the fonts markers and reports the size", async () => {
     sandbox
   );
   assert.equal(code, 0);
-  assert.equal(sandbox.out, "inlined 6 faces (0.0 KB)\n");
+  assert.equal(sandbox.out, "inlined 3 faces (0.0 KB)\n");
   const html = readFileSync(join(dir, "BRAND.html"), "utf8");
   const { css, start, end } = readBlock(html, "fonts");
   assert.ok(css.startsWith("\n/* latin */\n@font-face"));
@@ -97,6 +102,20 @@ test("writes between the fonts markers and reports the size", async () => {
     "https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
   );
   assert.match(first.init.headers["User-Agent"], /Chrome\/130/);
+  const downloads = calls.filter((c) => c.url.includes("gstatic"));
+  assert.equal(downloads.length, 3);
+  assert.ok(downloads.every((c) => !("User-Agent" in c.init.headers)));
+});
+
+test("running twice leaves the same file with one set of faces", async () => {
+  const dir = setup();
+  const args = ["fonts", "BRAND.html", "Inter:wght@400;600"];
+  assert.equal(await run(args, io(dir, fakeFetch())), 0);
+  const once = readFileSync(join(dir, "BRAND.html"), "utf8");
+  assert.equal(await run(args, io(dir, fakeFetch())), 0);
+  const twice = readFileSync(join(dir, "BRAND.html"), "utf8");
+  assert.equal(twice, once);
+  assert.equal(twice.match(/@font-face/g).length, 2);
 });
 
 test("returns 2 and leaves the file untouched on a failed fetch", async () => {

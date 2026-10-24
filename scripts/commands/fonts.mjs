@@ -45,7 +45,9 @@ async function fontFaceCss(css2, download, keepSubsets = ["latin"]) {
   return out.join("\n\n");
 }
 
-async function get(io, url, headers) {
+// The body is read before the timer is cleared, so a server that stalls
+// mid-body is cut off too.
+async function get(io, url, headers, as) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
@@ -53,8 +55,13 @@ async function get(io, url, headers) {
       headers,
       signal: controller.signal,
     });
-    if (response.status !== 200) throw new Error(`HTTP ${response.status}`);
-    return response;
+    if (response.status !== 200) {
+      await response.body?.cancel().catch(() => {});
+      throw new Error(`HTTP ${response.status}`);
+    }
+    return as === "text"
+      ? await response.text()
+      : new Uint8Array(await response.arrayBuffer());
   } finally {
     clearTimeout(timer);
   }
@@ -88,9 +95,7 @@ async function run(args, io) {
 
   let bytes = 0;
   const download = async (url) => {
-    const data = new Uint8Array(
-      await (await get(io, url, { Accept: "*/*" })).arrayBuffer()
-    );
+    const data = await get(io, url, { Accept: "*/*" }, "bytes");
     bytes += data.length;
     return data;
   };
@@ -99,11 +104,13 @@ async function run(args, io) {
   for (const arg of families) {
     try {
       const url = `${CSS2}?family=${arg.replace(/ /g, "+")}&display=swap`;
-      const response = await get(io, url, {
-        "User-Agent": USER_AGENT,
-        Accept: "text/css,*/*;q=0.1",
-      });
-      const css = await fontFaceCss(await response.text(), download);
+      const text = await get(
+        io,
+        url,
+        { "User-Agent": USER_AGENT, Accept: "text/css,*/*;q=0.1" },
+        "text"
+      );
+      const css = await fontFaceCss(text, download);
       if (!css.includes("@font-face")) throw new Error("no faces");
       parts.push(css);
     } catch {
@@ -117,10 +124,15 @@ async function run(args, io) {
   if (failed) return 2;
 
   const css = parts.join("\n\n");
-  writeFileSync(
-    path,
-    html.slice(0, block.start) + "\n" + css + "\n" + html.slice(block.end)
-  );
+  try {
+    writeFileSync(
+      path,
+      html.slice(0, block.start) + "\n" + css + "\n" + html.slice(block.end)
+    );
+  } catch {
+    io.stderr.write(`Cannot write ${file}\n`);
+    return 1;
+  }
   const faces = (css.match(/@font-face/g) ?? []).length;
   io.stdout.write(`inlined ${faces} faces (${(bytes / 1024).toFixed(1)} KB)\n`);
   return 0;
