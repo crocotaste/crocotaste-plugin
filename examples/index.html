@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Crocotaste plugin</title>
+    <style>
+      :root {
+        --bg: #fafaf9;
+        --card: #ffffff;
+        --text: #1c1b1a;
+        --muted: #5e5b57;
+        --line: #dedbd6;
+        --link: #1d4ed8;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #141413;
+          --card: #1d1c1b;
+          --text: #f0eeeb;
+          --muted: #a8a49e;
+          --line: #34322f;
+          --link: #8fb0ff;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font:
+          1rem/1.55 system-ui,
+          -apple-system,
+          "Segoe UI",
+          sans-serif;
+      }
+      main {
+        max-width: 44rem;
+        margin: 0 auto;
+        padding: 3rem 1.25rem 4rem;
+      }
+      h1 {
+        margin: 0 0 0.5rem;
+        font-size: 2rem;
+        line-height: 1.2;
+      }
+      h2 {
+        margin: 2.5rem 0 0.75rem;
+        font-size: 1.125rem;
+      }
+      p {
+        margin: 0;
+      }
+      .lead,
+      .note {
+        color: var(--muted);
+      }
+      .note {
+        margin-top: 1rem;
+        font-size: 0.875rem;
+      }
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+        gap: 1rem;
+        margin-top: 2rem;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 0.5rem;
+        padding: 1.25rem;
+      }
+      .card h2 {
+        margin: 0 0 0.25rem;
+      }
+      .card p {
+        color: var(--muted);
+      }
+      .links {
+        display: flex;
+        gap: 1.25rem;
+        margin-top: 1rem;
+      }
+      a {
+        color: var(--link);
+      }
+      pre {
+        margin: 0 0 0.75rem;
+        padding: 0.875rem 1rem;
+        overflow-x: auto;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Crocotaste plugin</h1>
+      <p class="lead">
+        Brand books, design guidelines and mockups, made with your coding agent.
+      </p>
+
+      <div class="cards">
+        <section class="card">
+          <h2>Tidewell</h2>
+          <p>A tide and weather app that tells sea swimmers when to go in.</p>
+          <div class="links">
+            <a href="tidewell/BRAND.html">Brand book</a>
+            <a href="tidewell/mockups/index.html">Mockups</a>
+          </div>
+        </section>
+        <section class="card">
+          <h2>Ledgerline</h2>
+          <p>Bookkeeping for small shops: invoices out, payments in.</p>
+          <div class="links">
+            <a href="ledgerline/BRAND.html">Brand book</a>
+            <a href="ledgerline/mockups/index.html">Mockups</a>
+          </div>
+        </section>
+      </div>
+      <p class="note">
+        Each example was made by following the plugin's skills from a brief.
+        Both products are placeholders.
+      </p>
+
+      <h2>Install</h2>
+      <pre><code>claude plugin install crocotaste --marketplace crocotaste/crocotaste-plugin</code></pre>
+      <p>
+        <a href="https://github.com/crocotaste/crocotaste-plugin"
+          >github.com/crocotaste/crocotaste-plugin</a
+        >
+      </p>
+    </main>
+  </body>
+</html>
