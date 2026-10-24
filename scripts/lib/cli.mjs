@@ -36,8 +36,8 @@ const COMMANDS = new Map([
   [
     "fonts",
     {
-      summary: "Find a font and embed it in BRAND.html",
-      usage: "crocotaste fonts <family>",
+      summary: "Inline open fonts into BRAND.html as base64",
+      usage: 'crocotaste fonts <BRAND.html> "<Family:wght@400;600>" ...',
       load: () => import("../commands/fonts.mjs"),
     },
   ],
