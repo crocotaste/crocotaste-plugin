@@ -56,7 +56,7 @@ CLAUDE.md or AGENTS.md         one marked block that points agents at the design
 
 ## Then Crocotaste
 
-Crocotaste reviews every pull request against your `DESIGN.md` and posts cited findings with ready-made fixes. [How it works with the plugin](https://www.crocotaste.com).
+Crocotaste reviews every pull request against your `DESIGN.md` and posts cited findings with ready-made fixes. [How it works with the plugin](https://www.crocotaste.com/docs/plugin).
 
 ## Examples
 
